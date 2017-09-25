@@ -81,7 +81,34 @@ namespace DiscordBot
         {
             DiscordMember bot = await e.Guild.GetMemberAsync(258902871720984577);
             var channel = e.Guild.Channels.FirstOrDefault(c => c.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
-            await channel.SendMessageAsync($"User `{ e.Member.Username }` changed his nickname, from `{ e.NicknameBefore ?? e.Member.Username }` to `{ e.NicknameAfter ?? e.Member.Username }`");
+
+            if (e.NicknameAfter == null && e.NicknameBefore == null)
+            {
+                if (e.RolesAfter.Count > e.RolesBefore.Count)
+                {
+                    foreach (var role in e.RolesAfter)
+                    {
+                        if (!e.RolesBefore.Contains(role))
+                        {
+                            await channel.SendMessageAsync($"User `{ e.Member.Username }` has received an additional role `{ role.Name }`.");
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var role in e.RolesBefore)
+                    {
+                        if (!e.RolesBefore.Contains(role))
+                        {
+                            await channel.SendMessageAsync($"User `{ e.Member.Username }` has been removed a role `{ role.Name }`.");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                await channel.SendMessageAsync($"User `{ e.Member.Username }` changed his nickname, from `{ e.NicknameBefore ?? e.Member.Username }` to `{ e.NicknameAfter ?? e.Member.Username }`");
+            }
         }
 
         private async Task Client_GuildMemberAdded(GuildMemberAddEventArgs e)
