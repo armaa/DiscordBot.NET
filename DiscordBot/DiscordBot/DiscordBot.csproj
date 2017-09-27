@@ -41,6 +41,9 @@
     <Reference Include="DSharpPlus.CommandsNext, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DSharpPlus.CommandsNext.3.1.2\lib\net46\DSharpPlus.CommandsNext.dll</HintPath>
     </Reference>
+    <Reference Include="DSharpPlus.Interactivity, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DSharpPlus.Interactivity.3.1.2\lib\net46\DSharpPlus.Interactivity.dll</HintPath>
+    </Reference>
     <Reference Include="DSharpPlus.WebSocket.WebSocket4Net, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DSharpPlus.WebSocket.WebSocket4Net.3.1.2\lib\net46\DSharpPlus.WebSocket.WebSocket4Net.dll</HintPath>
     </Reference>

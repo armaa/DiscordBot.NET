@@ -18,6 +18,7 @@ using Google.Apis.Services;
 using System.Threading;
 using AngleSharp;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using ImageMagick;
 using PUBGSharp;
 using PUBGSharp.Helpers;
@@ -735,6 +736,98 @@ namespace DiscordBot.Commands
             await ctx.RespondWithFileAsync("../../Files/Pictures/f.jpg", "F");
         }
 
+        [Command("image")]
+        [Description("Searches google for images")]
+        public async Task Image(CommandContext ctx, [RemainingText][Description("Term you want to search for")] string term)
+        {
+            var interactivity = ctx.Client.GetInteractivityModule();
+            term = term.Replace(' ', '+');
+
+            using (WebClient client = new WebClient())
+            {
+                string value = client.DownloadString($"https://www.googleapis.com/customsearch/v1?key={ cfg.ApiKeyGoogleSearch }&cx={ cfg.CxGoogleSearch }&q={ term }&num=10&searchType=image");
+                JToken token = JToken.Parse(value);
+                var items = token.SelectToken("items");
+                int position = 0;
+                bool param = true;
+
+                DiscordEmbed embed = GetPictureEmbed(items, position);
+
+                var msg = await ctx.RespondAsync("", embed: embed);
+
+                var arrowForward = DiscordEmoji.FromName(ctx.Client, ":arrow_forward:");
+                var arrowBackward = DiscordEmoji.FromName(ctx.Client, ":arrow_backward:");
+                var pauseButton = DiscordEmoji.FromName(ctx.Client, ":pause_button:");
+                var stopButton = DiscordEmoji.FromName(ctx.Client, ":stop_button:");
+
+                await msg.CreateReactionAsync(arrowBackward);
+                await msg.CreateReactionAsync(arrowForward);
+                await msg.CreateReactionAsync(pauseButton);
+                await msg.CreateReactionAsync(stopButton);
+
+                while (param)
+                {
+                    var one = await interactivity.WaitForReactionAsync(s => s.Name == arrowForward.Name
+                        || s.Name == arrowBackward.Name
+                        || s.Name == pauseButton.Name
+                        || s.Name == stopButton.Name, ctx.User, TimeSpan.FromSeconds(10));
+
+                    if (one != null)
+                    {
+                        switch (one.Emoji.Name)
+                        {
+                            // :arrow_backward: emoji
+                            case "◀":
+                                if (position == 0)
+                                    position = 9;
+                                else
+                                    position--;
+                                embed = GetPictureEmbed(items, position);
+                                await msg.DeleteAllReactionsAsync();
+                                msg = await msg.ModifyAsync("", embed: embed);
+                                await msg.CreateReactionAsync(arrowBackward);
+                                await msg.CreateReactionAsync(arrowForward);
+                                await msg.CreateReactionAsync(pauseButton);
+                                await msg.CreateReactionAsync(stopButton);
+                                break;
+                            // :arrow_forward: emoji
+                            case "▶":
+                                if (position == 9)
+                                    position = 0;
+                                else
+                                    position++;
+                                embed = GetPictureEmbed(items, position);
+                                await msg.DeleteAllReactionsAsync();
+                                msg = await msg.ModifyAsync("", embed: embed);
+                                await msg.CreateReactionAsync(arrowBackward);
+                                await msg.CreateReactionAsync(arrowForward);
+                                await msg.CreateReactionAsync(pauseButton);
+                                await msg.CreateReactionAsync(stopButton);
+                                break;
+                            // :pause_button: emoji
+                            case "⏸":
+                                await msg.DeleteAllReactionsAsync();
+                                param = false;
+                                break;
+                            // :stop_buttom: emoji
+                            case "⏹":
+                                await msg.DeleteAsync();
+                                param = false;
+                                break;
+                            default:
+                                await ctx.RespondAsync("It broke");
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        await msg.DeleteAllReactionsAsync();
+                        param = false;
+                    }
+                }
+            }
+        }
+
         [Command("mute")]
         [Description("Mutes an user")]
         [RequireOwner]
@@ -803,7 +896,7 @@ namespace DiscordBot.Commands
         [Command("test")]
         [Hidden]
         [RequireOwner]
-        public async Task Test(CommandContext ctx, string bla)
+        public async Task Test(CommandContext ctx)
         {
             
         }
@@ -814,7 +907,7 @@ namespace DiscordBot.Commands
         [Aliases("playing", "status")]
         public async Task Game(CommandContext ctx, [RemainingText] string game)
         {
-            Game g = new Game(game) { StreamType = GameStreamType.NoStream};
+            Game g = new Game(game) { StreamType = GameStreamType.NoStream };
             await ctx.Client.UpdateStatusAsync(g);
         }
 
@@ -832,7 +925,7 @@ namespace DiscordBot.Commands
         public async Task Avatar(CommandContext ctx, string avatarLink)
         {
             WebClient client = new WebClient();
-            System.IO.MemoryStream stream = new System.IO.MemoryStream(client.DownloadData(avatarLink));
+            MemoryStream stream = new MemoryStream(client.DownloadData(avatarLink));
 
             await ctx.Client.EditCurrentUserAsync(null, stream);
         }
@@ -915,6 +1008,15 @@ namespace DiscordBot.Commands
             }
 
             return MagickColors.White;
+        }
+
+        private DiscordEmbed GetPictureEmbed(JToken items, int position)
+        {
+            var url = items[position].SelectToken("link").ToString();
+            return new DiscordEmbedBuilder().WithColor(DiscordColor.Cyan)
+                .WithTitle($"Picture { position + 1 }/10")
+                .WithFooter("Image search result")
+                .WithImageUrl(url);
         }
     }
 }

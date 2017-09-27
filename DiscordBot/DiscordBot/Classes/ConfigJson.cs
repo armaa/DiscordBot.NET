@@ -18,6 +18,10 @@ namespace DiscordBot.Classes
         public string ApplicationNameYoutube { get; private set; }
         [JsonProperty("ApiKeyPUBG")]
         public string ApiKeyPUBG { get; private set; }
+        [JsonProperty("ApiKeyGoogleSearch")]
+        public string ApiKeyGoogleSearch { get; set; }
+        [JsonProperty("CxGoogleSearch")]
+        public string CxGoogleSearch { get; set; }
 
         public static ConfigJson GetConfigJson()
         {

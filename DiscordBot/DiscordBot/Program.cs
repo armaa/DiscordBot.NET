@@ -16,6 +16,7 @@ using DSharpPlus.EventArgs;
 using DSharpPlus.Entities;
 using ImageMagick;
 using DiscordBot.Classes;
+using DSharpPlus.Interactivity;
 
 namespace DiscordBot
 {
@@ -67,6 +68,7 @@ namespace DiscordBot
             CommandsNextUtilities.RegisterUserFriendlyTypeName<GuruPlatform>("platform");
 
             commands.RegisterCommands<PublicCommands>();
+            client.UseInteractivity();
 
             // Required if running on w7
             client.SetWebSocketClient<WebSocket4NetClient>();
