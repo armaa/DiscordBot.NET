@@ -92,7 +92,7 @@ namespace DiscordBot
                     {
                         if (!e.RolesBefore.Contains(role))
                         {
-                            await channel.SendMessageAsync($"User `{ e.Member.Username }` has received an additional role `{ role.Name }`.");
+                            await channel.SendMessageAsync($"User `{ e.Member.Username }` has been assigned a role, `{ role.Name }`.");
                         }
                     }
                 }
@@ -100,9 +100,9 @@ namespace DiscordBot
                 {
                     foreach (var role in e.RolesBefore)
                     {
-                        if (!e.RolesBefore.Contains(role))
+                        if (!e.RolesAfter.Contains(role))
                         {
-                            await channel.SendMessageAsync($"User `{ e.Member.Username }` has been removed a role `{ role.Name }`.");
+                            await channel.SendMessageAsync($"User `{ e.Member.Username }` has been removed a role, `{ role.Name }`.");
                         }
                     }
                 }

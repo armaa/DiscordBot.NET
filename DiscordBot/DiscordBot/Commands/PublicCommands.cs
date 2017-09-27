@@ -740,6 +740,14 @@ namespace DiscordBot.Commands
         [Description("Searches google for images")]
         public async Task Image(CommandContext ctx, [RemainingText][Description("Term you want to search for")] string term)
         {
+            await ctx.TriggerTypingAsync();
+
+            if (IsActionOnCoolDown())
+            {
+                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
+                return;
+            }
+
             var interactivity = ctx.Client.GetInteractivityModule();
             term = term.Replace(' ', '+');
 
