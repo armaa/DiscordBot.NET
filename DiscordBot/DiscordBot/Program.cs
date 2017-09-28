@@ -120,7 +120,78 @@ namespace DiscordBot
             DiscordMember bot = await e.Guild.GetMemberAsync(258902871720984577);
             var channel = e.Guild.Channels.FirstOrDefault(c => c.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
 
-            await channel.SendMessageAsync($"Welcome our new member { e.Member.Mention }!");
+            await channel.SendMessageAsync($"Welcome to our new member { e.Member.Mention }!");
+            
+            if (e.Guild.Id == 227847810152792064)
+            {
+                _ = Task.Run(async () => await AssignRoleToAMember(e, channel));
+            }
+        }
+
+        private async Task AssignRoleToAMember(GuildMemberAddEventArgs e, DiscordChannel channel)
+        {
+            var interactivity = client.GetInteractivityModule();
+            var msg = await channel.SendMessageAsync("Please take your time and select the region you usually play in.");
+
+            var emojiUS = DiscordEmoji.FromName(client, ":flag_us:");
+            var emojiEU = DiscordEmoji.FromName(client, ":flag_eu:");
+            var emojiSEA = DiscordEmoji.FromName(client, ":ocean:");
+            var emojiBR = DiscordEmoji.FromName(client, ":flag_br:");
+            var emojiRU = DiscordEmoji.FromName(client, ":flag_ru:");
+            var emojiAUS = DiscordEmoji.FromName(client, ":flag_au:");
+            var emojiList = new List<DiscordEmoji>() { emojiUS, emojiEU, emojiSEA, emojiBR, emojiRU, emojiAUS };
+
+            foreach (var emoji in emojiList)
+            {
+                await msg.CreateReactionAsync(emoji);
+            }
+
+            var reaction = await interactivity.WaitForReactionAsync(s => s.Name == emojiUS.Name
+                || s.Name == emojiEU.Name
+                || s.Name == emojiSEA.Name
+                || s.Name == emojiBR.Name
+                || s.Name == emojiRU.Name
+                || s.Name == emojiAUS.Name, e.Member, TimeSpan.FromSeconds(60));
+
+            if (reaction != null)
+            {
+                switch (reaction.Emoji.Name)
+                {
+                    //  :flag_us: emoji
+                    case "🇺🇸":
+                        await AssignRoleToAMemberAsync(e, "NA");
+                        break;
+                    //  :flag_eu: emoji
+                    case "🇪🇺":
+                        await AssignRoleToAMemberAsync(e, "EU");
+                        break;
+                    //  :ocean: emoji, representing SEA region for now..
+                    case "🌊":
+                        await AssignRoleToAMemberAsync(e, "SEA");
+                        break;
+                    //  :flag_br: emoji
+                    case "🇧🇷":
+                        await AssignRoleToAMemberAsync(e, "BR");
+                        break;
+                    //  :flag_ru: emoji
+                    case "🇷🇺":
+                        await AssignRoleToAMemberAsync(e, "RU-S-A");
+                        break;
+                    //  :flag_au: emoji
+                    case "🇦🇺":
+                        await AssignRoleToAMemberAsync(e, "AUS");
+                        break;
+                    default:
+                        await channel.SendMessageAsync("It broke..");
+                        break;
+                }
+
+                await channel.SendMessageAsync("All done! If you dont mind playing in multiple regions, message the server admin or one of the mods to assign you the role needed.");
+            }
+            else
+            {
+                await channel.SendMessageAsync("Very well then, if you wish to have a role assigned later on, message the server admin or one of the mods.");
+            }
         }
 
         private Task Client_Ready(ReadyEventArgs e)
@@ -234,6 +305,13 @@ namespace DiscordBot
                     await e.Channel.SendFileAsync("../../Files/Pictures/good goy.jpg");
                 }
             }
+        }
+
+        private async Task AssignRoleToAMemberAsync(GuildMemberAddEventArgs e, string roleName)
+        {
+            var role = e.Guild.Roles.Where(r => r.Name == roleName).FirstOrDefault();
+            var member = e.Member;
+            await member.GrantRoleAsync(role);
         }
     }
 }
