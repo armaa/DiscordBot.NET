@@ -904,70 +904,10 @@ namespace DiscordBot.Commands
 
         [Command("test")]
         [Hidden]
+        [RequireOwner]
         public async Task Test(CommandContext ctx)
         {
-            var msg = await ctx.RespondAsync("Click me");
-            var interactivity = ctx.Client.GetInteractivityModule();
-            var emojiUS = DiscordEmoji.FromName(ctx.Client, ":flag_us:");
-            var emojiEU = DiscordEmoji.FromName(ctx.Client, ":flag_eu:");
-            var emojiSEA = DiscordEmoji.FromName(ctx.Client, ":ocean:");
-            var emojiBR = DiscordEmoji.FromName(ctx.Client, ":flag_br:");
-            var emojiRU = DiscordEmoji.FromName(ctx.Client, ":flag_ru:");
-            var emojiAUS = DiscordEmoji.FromName(ctx.Client, ":flag_au:");
 
-            var emojiList = new List<DiscordEmoji>() { emojiUS, emojiEU, emojiSEA, emojiBR, emojiRU, emojiAUS };
-
-            foreach (var emoji in emojiList)
-            {
-                await msg.CreateReactionAsync(emoji);
-            }
-
-            var reaction = await interactivity.WaitForReactionAsync(s => s.Name == emojiUS.Name
-                    || s == emojiEU
-                    || s == emojiSEA
-                    || s.Name == emojiBR.Name
-                    || s.Name == emojiRU.Name
-                    || s.Name == emojiAUS.Name, ctx.Member, TimeSpan.FromSeconds(10));
-
-            if (reaction != null)
-            {
-                switch (reaction.Emoji.Name)
-                {
-                    //  :flag_us: emoji
-                    case "🇺🇸":
-                        await AssignRoleToAMemberAsync(ctx, "US");
-                        break;
-                    //  :flag_eu: emoji
-                    case "🇪🇺":
-                        await AssignRoleToAMemberAsync(ctx, "EU");
-                        break;
-                    //  :ocean: emoji, representing SEA region for now..
-                    case "🌊":
-                        await AssignRoleToAMemberAsync(ctx, "SEA");
-                        break;
-                    //  :flag_br: emoji
-                    case "🇧🇷":
-                        await AssignRoleToAMemberAsync(ctx, "BR");
-                        break;
-                    //  :flag_ru: emoji
-                    case "🇷🇺":
-                        await AssignRoleToAMemberAsync(ctx, "RU-S-A");
-                        break;
-                    //  :flag_au: emoji
-                    case "🇦🇺":
-                        await AssignRoleToAMemberAsync(ctx, "AUS");
-                        break;
-                    default:
-                        await ctx.RespondAsync("It broke..");
-                        break;
-                }
-
-                await ctx.RespondAsync("All done! If you play in multiple regions, message the server admin or one of the mods to assign you the role needed.");
-            }
-            else
-            {
-                await ctx.RespondAsync("Very well then, if you wish to have a role assigned later on, message the server admin or one of the mods.");
-            }
         }
 
         [Command("game")]
@@ -1086,13 +1026,6 @@ namespace DiscordBot.Commands
                 .WithTitle($"Picture { position + 1 }/10")
                 .WithFooter("Image search result")
                 .WithImageUrl(url);
-        }
-
-        private async Task AssignRoleToAMemberAsync(CommandContext e, string roleName)
-        {
-            var role = e.Guild.Roles.Where(r => r.Name == roleName).FirstOrDefault();
-            var member = e.Member;
-            await member.GrantRoleAsync(role);
         }
     }
 }
