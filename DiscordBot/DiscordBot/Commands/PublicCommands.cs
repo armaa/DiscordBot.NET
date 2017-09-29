@@ -767,7 +767,7 @@ namespace DiscordBot.Commands
                 var arrowBackward = DiscordEmoji.FromName(ctx.Client, ":arrow_backward:");
                 var pauseButton = DiscordEmoji.FromName(ctx.Client, ":pause_button:");
                 var stopButton = DiscordEmoji.FromName(ctx.Client, ":stop_button:");
-                var emojiList = new List<DiscordEmoji>() { arrowForward, arrowBackward, pauseButton, stopButton };
+                var emojiList = new List<DiscordEmoji>() { arrowBackward, arrowForward, pauseButton, stopButton };
 
                 foreach (var emoji in emojiList)
                 {
@@ -788,7 +788,7 @@ namespace DiscordBot.Commands
                             // :arrow_backward: emoji
                             case "◀":
                                 if (position == 0)
-                                    position = 9;
+                                    position = items.Count() - 1;
                                 else
                                     position--;
                                 embed = GetPictureEmbed(items, position);
@@ -801,7 +801,7 @@ namespace DiscordBot.Commands
                                 break;
                             // :arrow_forward: emoji
                             case "▶":
-                                if (position == 9)
+                                if (position == items.Count() - 1)
                                     position = 0;
                                 else
                                     position++;
@@ -1023,7 +1023,7 @@ namespace DiscordBot.Commands
         {
             var url = items[position].SelectToken("link").ToString();
             return new DiscordEmbedBuilder().WithColor(DiscordColor.Cyan)
-                .WithTitle($"Picture { position + 1 }/10")
+                .WithTitle($"Picture { position + 1 }/{ items.Count() }")
                 .WithFooter("Image search result")
                 .WithImageUrl(url);
         }
