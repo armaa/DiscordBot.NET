@@ -68,7 +68,7 @@ namespace DiscordBot
             CommandsNextUtilities.RegisterUserFriendlyTypeName<GuruPlatform>("platform");
 
             commands.RegisterCommands<PublicCommands>();
-            client.UseInteractivity();
+            client.UseInteractivity(new InteractivityConfiguration());
 
             // Required if running on w7
             client.SetWebSocketClient<WebSocket4NetClient>();

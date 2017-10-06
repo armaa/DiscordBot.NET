@@ -839,7 +839,7 @@ namespace DiscordBot.Commands
 
         [Command("info")]
         [Description("Gives info about a user in the guild")]
-        public async Task Info(CommandContext ctx, [Description("The user name, mentioned or just written down normally")] string name)
+        public async Task Info(CommandContext ctx, [RemainingText][Description("The user name, mentioned or just written down normally")] string name)
         {
             DiscordMember user;
             if (name.Contains('@'))
@@ -851,7 +851,7 @@ namespace DiscordBot.Commands
             else
             {
                 var userList = await ctx.Guild.GetAllMembersAsync();
-                user = userList.Where(m => m.Username?.ToLower() == name.ToLower() || m.Nickname?.ToLower() == name.ToLower()).FirstOrDefault();
+                user = userList.FirstOrDefault(m => (m.Username != null ? m.Username.ToLower() == name.ToLower() : false) || (m.Nickname != null ? m.Nickname.ToLower() == name.ToLower() : false));
             }
 
             if (user == null)
@@ -955,7 +955,7 @@ namespace DiscordBot.Commands
         [Aliases("playing", "status")]
         public async Task Game(CommandContext ctx, [RemainingText] string game)
         {
-            Game g = new Game(game) { StreamType = GameStreamType.NoStream };
+            DiscordGame g = new DiscordGame(game);
             await ctx.Client.UpdateStatusAsync(g);
         }
 
