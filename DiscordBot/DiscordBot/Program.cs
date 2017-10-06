@@ -238,7 +238,14 @@ namespace DiscordBot
             }
             else
             {
-                await e.Context.Channel.SendMessageAsync($"Exception occured:\n```{e.Exception.GetType()}: {e.Exception.Message}```If you dont know what this means, call armaa to explain it!");
+                var embed = new DiscordEmbedBuilder()
+                    .AddField("An exception occured when executing a command", e.Exception.GetType().ToString())
+                    .AddField("Error message", e.Exception.Message)
+                    .WithColor(DiscordColor.Red)
+                    .WithTimestamp(DateTime.Now)
+                    .WithFooter($"{ client.CurrentUser.Username }#{ client.CurrentUser.Discriminator }", client.CurrentUser.AvatarUrl);
+                
+                await e.Context.Channel.SendMessageAsync(embed: embed);
             }
         }
 

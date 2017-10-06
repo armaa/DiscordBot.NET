@@ -837,6 +837,44 @@ namespace DiscordBot.Commands
             }
         }
 
+        [Command("info")]
+        public async Task Info(CommandContext ctx, string name)
+        {
+            DiscordMember user;
+            if (name.Contains('@'))
+            {
+                var userId = new string(name.Where(char.IsDigit).ToArray());
+                var userIdLong = ulong.Parse(userId);
+                user = await ctx.Guild.GetMemberAsync(userIdLong);
+            }
+            else
+            {
+                var userList = await ctx.Guild.GetAllMembersAsync();
+                user = userList.Where(m => m.Username?.ToLower() == name.ToLower() || m.Nickname?.ToLower() == name.ToLower()).FirstOrDefault();
+            }
+
+            if (user == null)
+            {
+                await ctx.RespondAsync("User doesnt exist");
+                return;
+            }
+
+            DiscordEmbed embed = new DiscordEmbedBuilder().WithColor(DiscordColor.SpringGreen)
+                .WithAuthor(ctx.Member.DisplayName, ctx.Member.AvatarUrl, ctx.Member.AvatarUrl)
+                .WithTitle("Information about the user")
+                .WithThumbnailUrl(user.AvatarUrl)
+                .AddField("Username", $"{ user.Username }#{ user.Discriminator }", true)
+                .AddField("Nickname", $"{ user.Nickname ?? "None" }", true)
+                .AddField("Date joined", $"{ user.JoinedAt.Humanize() }", true)
+                .AddField("Exact date joined", $"{ user.JoinedAt.ToString("dd/MM/yyyy HH:mm:ss") }", true)
+                .AddField("Number of roles", $"{ user.Roles.Count() }", true)
+                .AddField("Roles", $"{ (user.Roles.Count() == 0 ? "None" : user.Roles.Select(r => r.Name).ToList().Humanize(", ")) }", true)
+                .WithFooter($"{ ctx.Member.Username }#{ ctx.Member.Discriminator }", ctx.Member.AvatarUrl)
+                .WithTimestamp(DateTime.Now);
+
+            await ctx.RespondAsync(embed: embed);
+        }
+
         [Command("mute")]
         [Description("Mutes an user")]
         [RequireOwner]
@@ -872,7 +910,7 @@ namespace DiscordBot.Commands
         {
             var guildRoles = ctx.Guild.Roles;
             var bot = await ctx.Guild.GetMemberAsync(258902871720984577);
-            var mutedRole = guildRoles.Where(r => r.Id.Equals(352133974837035018)).FirstOrDefault();
+            var mutedRole = guildRoles.Where(r => r.Name.Equals("Muted")).FirstOrDefault();
             var guildChannels = ctx.Guild.Channels.Where(c => c.Type == ChannelType.Text).ToList();
 
             foreach (var channel in guildChannels)
