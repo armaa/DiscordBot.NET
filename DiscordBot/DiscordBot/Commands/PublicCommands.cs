@@ -838,7 +838,8 @@ namespace DiscordBot.Commands
         }
 
         [Command("info")]
-        public async Task Info(CommandContext ctx, string name)
+        [Description("Gives info about a user in the guild")]
+        public async Task Info(CommandContext ctx, [Description("The user name, mentioned or just written down normally")] string name)
         {
             DiscordMember user;
             if (name.Contains('@'))
