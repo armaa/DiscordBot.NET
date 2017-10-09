@@ -36,7 +36,7 @@ namespace DiscordBot.Commands
         private DateTime cooldown = DateTime.Now;
         private string cooldownTimerLeft;
         private IConfiguration angleSharpConfiguration = AngleSharpConfigurationWithUserAgent();
-        private ConfigJson cfg = ConfigJson.GetConfigJson();
+        private ConfigJson cfg = ConfigJson.GetConfigJson();    
         private string[] weatherDirections = new string[] { "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW", "N" };
 
         [Command("uptime")]
@@ -876,10 +876,21 @@ namespace DiscordBot.Commands
             await ctx.RespondAsync(embed: embed);
         }
 
+        [Command("reminder")]
+        [Description("Sets a reminder for you")]
+        [Aliases("remind, remindme")]
+        public async Task Reminder(CommandContext ctx, [Description("Time, from now, at which you should get the reminder")] TimeSpan time, [RemainingText][Description("Message of the reminder")] string message = "Reminder for something important you asked to be reminded of.")
+        {
+            var date = DateTime.Now.Add(time);
+            var user = ctx.Member;
+            await ctx.RespondAsync($"Reminder set for { date.Humanize(false, DateTime.Now) } with the message saying: ```{ message }```");
+            var t = new Timer(async e => await user.SendMessageAsync(message), null, time, TimeSpan.FromMilliseconds(-1));
+        }
+
         [Command("mute")]
         [Description("Mutes an user")]
         [RequireOwner]
-        public async Task Mute(CommandContext ctx, [Description("The user you want to mute, mentioned")] DiscordMember user, [Description("Duration of mute, in minutes")] double duration = 5)
+        public async Task Mute(CommandContext ctx, [Description("The user you want to mute, mentioned")] DiscordMember user, [Description("Duration of mute")] TimeSpan duration)
         {
             if (user.Id == 258902871720984577)
             {
@@ -889,7 +900,6 @@ namespace DiscordBot.Commands
             
             var mutedRole = ctx.Guild.Roles.Where(r => r.Id.Equals(352133974837035018));
             var userRoles = new List<DiscordRole>(user.Roles);
-            var timeInMiliseconds = (int) TimeSpan.FromMinutes(duration).TotalMilliseconds;
 
             if (user.Roles.Contains(mutedRole.First()))
             {
@@ -898,10 +908,9 @@ namespace DiscordBot.Commands
             }
 
             await user.ReplaceRolesAsync(mutedRole);
+            await ctx.RespondAsync($"Muting { user.Mention } for { duration.Humanize(3, minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour) }");
 
-            await ctx.RespondAsync($"Muting { user.Mention } for { duration.Minutes().Humanize() }");
-
-            Timer t = new Timer(async e => await user.ReplaceRolesAsync(userRoles), null, timeInMiliseconds, Timeout.Infinite);
+            var t = new Timer(async e => await user.ReplaceRolesAsync(userRoles), null, duration, TimeSpan.FromMilliseconds(-1));
         }
 
         [Command("setmute")]
@@ -942,11 +951,11 @@ namespace DiscordBot.Commands
         }
 
         [Command("test")]
-        [Hidden]
         [RequireOwner]
-        public async Task Test(CommandContext ctx)
+        [Hidden]
+        public async Task Test(CommandContext ctx, TimeSpan time, [RemainingText]string reminder = "Reminder for something important you asked to be reminded of.")
         {
-
+            
         }
 
         [Command("game")]
