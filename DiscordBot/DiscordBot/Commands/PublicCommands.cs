@@ -878,7 +878,7 @@ namespace DiscordBot.Commands
 
         [Command("reminder")]
         [Description("Sets a reminder for you")]
-        [Aliases("remind, remindme")]
+        [Aliases("remind", "remindme")]
         public async Task Reminder(CommandContext ctx, [Description("Time, from now, at which you should get the reminder")] TimeSpan time, [RemainingText][Description("Message of the reminder")] string message = "Reminder for something important you asked to be reminded of.")
         {
             var date = DateTime.Now.Add(time);
