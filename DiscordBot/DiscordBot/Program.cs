@@ -84,7 +84,7 @@ namespace DiscordBot
             DiscordMember bot = await e.Guild.GetMemberAsync(258902871720984577);
             var channel = e.Guild.Channels.FirstOrDefault(c => c.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
 
-            if (e.NicknameAfter == null && e.NicknameBefore == null)
+            if (e.NicknameAfter == null && e.NicknameBefore == null || e.NicknameBefore == e.NicknameAfter)
             {
                 if (e.RolesAfter.Count > e.RolesBefore.Count)
                 {
