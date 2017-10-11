@@ -36,7 +36,8 @@ namespace DiscordBot.Commands
         private DateTime cooldown = DateTime.Now;
         private string cooldownTimerLeft;
         private IConfiguration angleSharpConfiguration = AngleSharpConfigurationWithUserAgent();
-        private ConfigJson cfg = ConfigJson.GetConfigJson();    
+        private ConfigJson cfg = ConfigJson.GetConfigJson();
+        private Permissions mutedRolePermissions = Permissions.AccessChannels | Permissions.AddReactions | Permissions.ChangeNickname | Permissions.CreateInstantInvite | Permissions.ReadMessageHistory;
         private string[] weatherDirections = new string[] { "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW", "N" };
 
         [Command("uptime")]
@@ -892,25 +893,30 @@ namespace DiscordBot.Commands
         [RequireOwner]
         public async Task Mute(CommandContext ctx, [Description("The user you want to mute, mentioned")] DiscordMember user, [Description("Duration of mute")] TimeSpan duration)
         {
+            if (ctx.Guild.Roles.FirstOrDefault(xr => xr.Name == "Muted") == null)
+            {
+                await ctx.RespondAsync("Please run `!setmute` command first to make this command work effectively..");
+                return;
+            }
+
             if (user.Id == 258902871720984577)
             {
                 await ctx.RespondAsync("You cant do that!");
                 return;
             }
             
-            var mutedRole = ctx.Guild.Roles.Where(r => r.Id.Equals(352133974837035018));
-            var userRoles = new List<DiscordRole>(user.Roles);
+            var mutedRole = ctx.Guild.Roles.FirstOrDefault(xr => xr.Name == "Muted");
 
-            if (user.Roles.Contains(mutedRole.First()))
+            if (user.Roles.Contains(mutedRole))
             {
                 await ctx.RespondAsync("User is already muted!");
                 return;
             }
-
-            await user.ReplaceRolesAsync(mutedRole);
+            
+            await user.GrantRoleAsync(mutedRole);
             await ctx.RespondAsync($"Muting { user.Mention } for { duration.Humanize(3, minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour) }");
 
-            var t = new Timer(async e => await user.ReplaceRolesAsync(userRoles), null, duration, TimeSpan.FromMilliseconds(-1));
+            var t = new Timer(async e => await user.RevokeRoleAsync(mutedRole), null, duration, TimeSpan.FromMilliseconds(-1));
         }
 
         [Command("setmute")]
@@ -920,16 +926,23 @@ namespace DiscordBot.Commands
         {
             var guildRoles = ctx.Guild.Roles;
             var bot = await ctx.Guild.GetMemberAsync(258902871720984577);
-            var mutedRole = guildRoles.Where(r => r.Name.Equals("Muted")).FirstOrDefault();
-            var guildChannels = ctx.Guild.Channels.Where(c => c.Type == ChannelType.Text).ToList();
+            var mutedRole = guildRoles.FirstOrDefault(xr => xr.Name.Equals("Muted"));
+
+            if (mutedRole == null)
+            {
+                await ctx.RespondAsync("Role doesnt exist, creating necessary role..");
+                mutedRole = await ctx.Guild.CreateRoleAsync("Muted", mutedRolePermissions, DiscordColor.Red, true, true);
+            }
+
+            var guildChannels = ctx.Guild.Channels.Where(xc => xc.Type == ChannelType.Text).ToList();
 
             foreach (var channel in guildChannels)
             {
-                if (channel.PermissionOverwrites.Where(r => r.Deny.ToString().Contains("ManageRoles")).Count() == 0)
+                if (channel.PermissionOverwrites.Where(xr => xr.Deny.ToString().Contains("ManageRoles")).Count() == 0)
                     await channel.AddOverwriteAsync(mutedRole, Permissions.None, Permissions.SendMessages);
             }
 
-            await ctx.RespondAsync("All done!");
+            await ctx.RespondAsync("All done! To double check, please see if permission `Muted` exists for text channels and if role `Muted` exists as well!");
         }
 
         [Command("pin")]
@@ -953,9 +966,9 @@ namespace DiscordBot.Commands
         [Command("test")]
         [RequireOwner]
         [Hidden]
-        public async Task Test(CommandContext ctx, TimeSpan time, [RemainingText]string reminder = "Reminder for something important you asked to be reminded of.")
+        public async Task Test(CommandContext ctx)
         {
-            
+
         }
 
         [Command("game")]
