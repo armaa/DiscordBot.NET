@@ -777,17 +777,14 @@ namespace DiscordBot.Commands
 
                 while (param)
                 {
-                    var reaction = await interactivity.WaitForReactionAsync(s => s.Name == arrowForward.Name
-                        || s.Name == arrowBackward.Name
-                        || s.Name == pauseButton.Name
-                        || s.Name == stopButton.Name, ctx.User, TimeSpan.FromSeconds(10));
+                    var reaction = await interactivity.WaitForReactionAsync(xe => emojiList.Contains(xe), ctx.User, TimeSpan.FromSeconds(10));
                     
                     if (reaction != null)
                     {
-                        switch (reaction.Emoji.Name)
+                        switch (reaction.Emoji.GetDiscordName())
                         {
                             // :arrow_backward: emoji
-                            case "◀":
+                            case ":arrow_backward:":
                                 if (position == 0)
                                     position = items.Count() - 1;
                                 else
@@ -801,7 +798,7 @@ namespace DiscordBot.Commands
                                 await msg.CreateReactionAsync(stopButton);
                                 break;
                             // :arrow_forward: emoji
-                            case "▶":
+                            case ":arrow_forward:":
                                 if (position == items.Count() - 1)
                                     position = 0;
                                 else
@@ -815,12 +812,12 @@ namespace DiscordBot.Commands
                                 await msg.CreateReactionAsync(stopButton);
                                 break;
                             // :pause_button: emoji
-                            case "⏸":
+                            case ":pause_button:":
                                 await msg.DeleteAllReactionsAsync();
                                 param = false;
                                 break;
                             // :stop_buttom: emoji
-                            case "⏹":
+                            case ":stop_buttom:":
                                 await msg.DeleteAsync();
                                 param = false;
                                 break;

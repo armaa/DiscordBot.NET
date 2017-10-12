@@ -138,47 +138,42 @@ namespace DiscordBot
             var emojiSEA = DiscordEmoji.FromName(client, ":ocean:");
             var emojiBR = DiscordEmoji.FromName(client, ":flag_br:");
             var emojiRU = DiscordEmoji.FromName(client, ":flag_ru:");
-            var emojiAUS = DiscordEmoji.FromName(client, ":flag_au:");
-            var emojiList = new List<DiscordEmoji>() { emojiUS, emojiEU, emojiSEA, emojiBR, emojiRU, emojiAUS };
+            var emojiAU = DiscordEmoji.FromName(client, ":flag_au:");
+            var emojiList = new List<DiscordEmoji>() { emojiUS, emojiEU, emojiSEA, emojiBR, emojiRU, emojiAU };
 
             foreach (var emoji in emojiList)
             {
                 await msg.CreateReactionAsync(emoji);
             }
 
-            var reaction = await interactivity.WaitForReactionAsync(s => s.Name == emojiUS.Name
-                || s.Name == emojiEU.Name
-                || s.Name == emojiSEA.Name
-                || s.Name == emojiBR.Name
-                || s.Name == emojiRU.Name
-                || s.Name == emojiAUS.Name, e.Member, TimeSpan.FromSeconds(60));
+            var reaction = await interactivity.WaitForReactionAsync(xe => emojiList.Contains(xe), e.Member, TimeSpan.FromSeconds(60));
 
             if (reaction != null)
             {
-                switch (reaction.Emoji.Name)
+                switch (reaction.Emoji.GetDiscordName())
                 {
                     //  :flag_us: emoji
-                    case "🇺🇸":
+                    case ":flag_us:":
                         await AssignRoleToAMemberAsync(e, "NA");
                         break;
                     //  :flag_eu: emoji
-                    case "🇪🇺":
+                    case ":flag_eu:":
                         await AssignRoleToAMemberAsync(e, "EU");
                         break;
                     //  :ocean: emoji, representing SEA region for now..
-                    case "🌊":
+                    case ":ocean:":
                         await AssignRoleToAMemberAsync(e, "SEA");
                         break;
                     //  :flag_br: emoji
-                    case "🇧🇷":
+                    case ":flag_br:":
                         await AssignRoleToAMemberAsync(e, "BR");
                         break;
                     //  :flag_ru: emoji
-                    case "🇷🇺":
+                    case ":flag_ru:":
                         await AssignRoleToAMemberAsync(e, "RU-S-A");
                         break;
                     //  :flag_au: emoji
-                    case "🇦🇺":
+                    case ":flag_au:":
                         await AssignRoleToAMemberAsync(e, "AUS");
                         break;
                     default:
@@ -203,35 +198,35 @@ namespace DiscordBot
 
         private Task Client_GuildAvailable(GuildCreateEventArgs e)
         {
-            e.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"Guild available: {e.Guild.Name}", DateTime.Now);
+            e.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"Guild available: { e.Guild.Name }", DateTime.Now);
 
             return Task.CompletedTask;
         }
 
         private Task Client_ClientErrored(ClientErrorEventArgs e)
         {
-            e.Client.DebugLogger.LogMessage(LogLevel.Error, "Bot", $"Exception occured: {e.Exception.GetType()}: {e.Exception.Message} ({ e.Exception.InnerException }", DateTime.Now);
+            e.Client.DebugLogger.LogMessage(LogLevel.Error, "Bot", $"Exception occured: { e.Exception.GetType() }: {e.Exception.Message } ({ e.Exception.InnerException }", DateTime.Now);
 
             return Task.CompletedTask;
         }
 
         private Task Commands_CommandExecuted(CommandExecutionEventArgs e)
         {
-            e.Context.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"{e.Context.User.Username} successfully executed '{e.Command.QualifiedName}'", DateTime.Now);
+            e.Context.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"{ e.Context.User.Username } successfully executed '{ e.Command.QualifiedName }'", DateTime.Now);
 
             return Task.CompletedTask;
         }
 
         private async Task Commands_CommandErrored(CommandErrorEventArgs e)
         {
-            e.Context.Client.DebugLogger.LogMessage(LogLevel.Error, "Bot", $"{e.Context.User.Username} tried executing '{e.Command?.QualifiedName ?? "<unknown command>"}' but it errored: {e.Exception.GetType()}: {e.Exception.Message ?? "<no message>"}", DateTime.Now);
+            e.Context.Client.DebugLogger.LogMessage(LogLevel.Error, "Bot", $"{ e.Context.User.Username } tried executing '{ e.Command?.QualifiedName ?? "<unknown command>" }' but it errored: { e.Exception.GetType() }: { e.Exception.Message ?? "<no message>" }", DateTime.Now);
 
             if (e.Exception is ChecksFailedException ex)
             {
                 var emoji = DiscordEmoji.FromName(e.Context.Client, ":no_entry:");
 
                 var embed = new DiscordEmbedBuilder().WithTitle("Access denied")
-                    .WithDescription($"{emoji} You do not have the permissions required to execute this command.")
+                    .WithDescription($"{ emoji } You do not have the permissions required to execute this command.")
                     .WithColor(DiscordColor.Red);
 
                 await e.Context.RespondAsync("", embed: embed);
@@ -263,11 +258,13 @@ namespace DiscordBot
 
                 else if (e.Message.Content.ToLower().StartsWith("same") || (e.Message.Content.ToLower().Split(' ').Skip(1).FirstOrDefault()?.Equals("same") ?? false))
                 {
+                    e.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"{ e.Author.Username } successfully executed 'same'", DateTime.Now);
                     await e.Channel.SendMessageAsync("same");
                 }
 
                 else if (e.Message.Content.ToLower().StartsWith("tru") || e.Message.Content.ToLower().StartsWith("true"))
                 {
+                    e.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"{ e.Author.Username } successfully executed 'true'", DateTime.Now);
                     await e.Channel.SendMessageAsync("tru");
                 }
 
@@ -304,11 +301,13 @@ namespace DiscordBot
 
                 else if (e.Message.Content.ToLower().StartsWith("halp"))
                 {
+                    e.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"{ e.Author.Username } successfully executed 'halp'", DateTime.Now);
                     await e.Channel.SendFileAsync("../../Files/Pictures/halp.jpg");
                 }
 
                 else if (e.Message.Content.ToLower().Contains("*rubs hands*") || e.Message.Content.ToLower().Contains("good goy"))
                 {
+                    e.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"{ e.Author.Username } successfully executed 'goy'", DateTime.Now);
                     await e.Channel.SendFileAsync("../../Files/Pictures/good goy.jpg");
                 }
             }
