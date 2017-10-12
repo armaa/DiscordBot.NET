@@ -7,7 +7,6 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DiscordBot.Enums;
-using System.Net;
 using Newtonsoft.Json;
 using DiscordBot.Classes;
 using Humanizer;
@@ -25,7 +24,6 @@ using PUBGSharp.Helpers;
 using PUBGSharp.Net.Model;
 using System.Net.Http;
 using PUBGSharp.Data;
-using System.IO;
 
 namespace DiscordBot.Commands
 {
@@ -38,7 +36,6 @@ namespace DiscordBot.Commands
         private IConfiguration angleSharpConfiguration = AngleSharpConfigurationWithUserAgent();
         private ConfigJson cfg = ConfigJson.GetConfigJson();
         private Permissions mutedRolePermissions = Permissions.AccessChannels | Permissions.AddReactions | Permissions.ChangeNickname | Permissions.CreateInstantInvite | Permissions.ReadMessageHistory;
-        private string[] weatherDirections = new string[] { "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW", "N" };
 
         [Command("uptime")]
         [Description("Gives the time how long has the bot been running for")]
@@ -46,8 +43,8 @@ namespace DiscordBot.Commands
         {
             await ctx.TriggerTypingAsync();
 
-            TimeSpan uptime = TimeSpan.FromMilliseconds(DateTime.Now.Subtract(startTime).TotalMilliseconds);
-            string humanizedUptime = uptime.Humanize(7, minUnit: TimeUnit.Second, maxUnit: TimeUnit.Year).Humanize(LetterCasing.Title);
+            var uptime = TimeSpan.FromMilliseconds(DateTime.Now.Subtract(startTime).TotalMilliseconds);
+            var humanizedUptime = uptime.Humanize(7, minUnit: TimeUnit.Second, maxUnit: TimeUnit.Year).Humanize(LetterCasing.Title);
 
             await ctx.RespondAsync(humanizedUptime);
         }
@@ -59,7 +56,7 @@ namespace DiscordBot.Commands
         {
             await ctx.TriggerTypingAsync();
 
-            DiscordEmoji emoji = DiscordEmoji.FromName(ctx.Client, ":ping_pong:");
+            var emoji = DiscordEmoji.FromName(ctx.Client, ":ping_pong:");
 
             await ctx.RespondAsync($"{ emoji } Pong! Ping: { ctx.Client.Ping }ms");
         }
@@ -83,7 +80,7 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            string url = "";
+            var url = "";
 
             switch (platform)
             {
@@ -114,13 +111,13 @@ namespace DiscordBot.Commands
                 var selectedRanked = docRank.QuerySelectorAll(selectorRanked);
                 var selectedCasual = docCasual.QuerySelectorAll(selectorCasual);
 
-                string playTime = selectedMain[0].InnerHtml.Trim();
-                string winrate = selectedMain[2].InnerHtml.Trim();
-                string kda = selectedMain[3].InnerHtml.Trim();
-                string elo = selectedCasual[0].InnerHtml.Trim();
-                string winrateRanked = "";
-                string eloRanked = "";
-                string rank = "";
+                var playTime = selectedMain[0].InnerHtml.Trim();
+                var winrate = selectedMain[2].InnerHtml.Trim();
+                var kda = selectedMain[3].InnerHtml.Trim();
+                var elo = selectedCasual[0].InnerHtml.Trim();
+                var winrateRanked = "";
+                var eloRanked = "";
+                var rank = "";
 
                 try
                 {
@@ -137,17 +134,17 @@ namespace DiscordBot.Commands
                 }
 
                 var topHeroes = docMain.QuerySelectorAll(selectorHeroes);
-                StringBuilder topFiveHeroes = new StringBuilder();
+                var topFiveHeroes = new StringBuilder();
 
                 foreach (var hero in topHeroes)
                 {
-                    string heroName = hero.QuerySelector("span.name").TextContent.Trim();
-                    string heroPosition = hero.QuerySelector("div.god").ChildNodes[4].TextContent.Trim();
+                    var heroName = hero.QuerySelector("span.name").TextContent.Trim();
+                    var heroPosition = hero.QuerySelector("div.god").ChildNodes[4].TextContent.Trim();
                     var otherHeroInfo = hero.QuerySelectorAll("td.text-center div");
-                    string heroKda = otherHeroInfo[0].TextContent.Trim();
-                    string heroKdaTotal = otherHeroInfo[1].TextContent.Trim();
-                    string heroWinrate = otherHeroInfo[2].TextContent.Trim();
-                    string heroHours = otherHeroInfo[3].TextContent.Trim();
+                    var heroKda = otherHeroInfo[0].TextContent.Trim();
+                    var heroKdaTotal = otherHeroInfo[1].TextContent.Trim();
+                    var heroWinrate = otherHeroInfo[2].TextContent.Trim();
+                    var heroHours = otherHeroInfo[3].TextContent.Trim();
                     topFiveHeroes.Append($"{ heroName } ({ heroPosition })  { heroKda } ({ heroKdaTotal })  { heroWinrate }  { heroHours }\n");
                 }
 
@@ -221,21 +218,21 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            using (WebClient client = new WebClient())
+            using (HttpClient client = new HttpClient())
             {
-                string value = client.DownloadString($"http://api.urbandictionary.com/v0/define?term={ term }");
-                Urban json = JsonConvert.DeserializeObject<Urban>(value);
+                var value = await client.GetStringAsync($"http://api.urbandictionary.com/v0/define?term={ term }");
+                var json = JsonConvert.DeserializeObject<Urban>(value);
 
-                List randomDescription = json.List.ElementAt(rnd.Next(json.List.Count));
+                var randomDescription = json.List.ElementAt(rnd.Next(json.List.Count));
 
-                DiscordEmbed embed = new DiscordEmbedBuilder().WithColor(DiscordColor.Lilac)
+                var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.Lilac)
+                    .WithAuthor(ctx.Member.Username, ctx.Member.AvatarUrl, ctx.Member.AvatarUrl)
                     .WithDescription($"{ randomDescription.Word } by { randomDescription.Author }")
-                    .WithTimestamp(DateTime.Now)
                     .AddField("Definition", randomDescription.Definition.Truncate(400, "[...]", Truncator.FixedNumberOfCharacters))
                     .AddField("Example", randomDescription.Example.Truncate(400, "[...]", Truncator.FixedNumberOfCharacters))
                     .AddField($"More examples for this word: { randomDescription.Permalink }", $":thumbsup: { randomDescription.ThumbsUp } | :thumbsdown: { randomDescription.ThumbsDown }")
-                    .WithAuthor(ctx.Member.Username, ctx.Member.AvatarUrl, ctx.Member.AvatarUrl)
-                    .WithFooter($"Requested by { ctx.Member.Username }#{ ctx.Member.Discriminator }", ctx.Member.AvatarUrl);
+                    .WithFooter($"Requested by { ctx.Member.Username }#{ ctx.Member.Discriminator }", ctx.Member.AvatarUrl)
+                    .WithTimestamp(DateTime.Now);
 
                 await ctx.RespondAsync("", embed: embed);
             }
@@ -248,7 +245,7 @@ namespace DiscordBot.Commands
         {
             await ctx.TriggerTypingAsync();
 
-            string url = "https://paladins.gamepedia.com/media/paladins.gamepedia.com/5/59/Sha_Lin_SP_Ability2_2.ogg";
+            var url = "https://paladins.gamepedia.com/media/paladins.gamepedia.com/5/59/Sha_Lin_SP_Ability2_2.ogg";
 
             await ctx.RespondWithFileAsync("../../Files/Pictures/READY.jpg", url);
         }
@@ -260,15 +257,15 @@ namespace DiscordBot.Commands
         {
             await ctx.TriggerTypingAsync();
 
-            string url = "https://paladins.gamepedia.com/media/paladins.gamepedia.com/2/22/Makoa_Plushy_TR_TakingDamage_2.ogg";
+            var url = "https://paladins.gamepedia.com/media/paladins.gamepedia.com/2/22/Makoa_Plushy_TR_TakingDamage_2.ogg";
 
-            DiscordMessage message = await ctx.RespondWithFileAsync("../../Files/Pictures/CHALLENGE.jpg", url);
+            var message = await ctx.RespondWithFileAsync("../../Files/Pictures/CHALLENGE.jpg", url);
 
-            DiscordEmoji emojiMuscle = DiscordEmoji.FromName(ctx.Client, ":muscle:");
-            DiscordEmoji emojiTurtle = ctx.Message.Content.StartsWith("!makoa") ? 
+            var emojiMuscle = DiscordEmoji.FromName(ctx.Client, ":muscle:");
+            var emojiTurtle = ctx.Message.Content.StartsWith("!makoa") ? 
                 DiscordEmoji.FromName(ctx.Client, ":makoa:") :
                 DiscordEmoji.FromName(ctx.Client, ":turtle:");
-            DiscordEmoji emojiAnchor = DiscordEmoji.FromName(ctx.Client, ":anchor:");
+            var emojiAnchor = DiscordEmoji.FromName(ctx.Client, ":anchor:");
 
             await message.CreateReactionAsync(emojiMuscle);
             await message.CreateReactionAsync(emojiTurtle);
@@ -296,9 +293,9 @@ namespace DiscordBot.Commands
             var titles = selectedTitles.Select(t => t.TextContent).ToList();
             var scores = selectedScores.Select(s => s.TextContent).ToList();
 
-            var randomNumbers = RandomDistinctNumbers(0, 50, 5);
+            var randomNumbers = GetRandomDistinctNumbers(0, 50, 5);
 
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             sb.Append("```");
 
             foreach (var number in randomNumbers)
@@ -330,7 +327,7 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            term = term.Contains(" ") ? term.Replace(" ", "+") : term;
+            term = term.Replace(" ", "+");
             await ctx.RespondAsync($"https://lmgtfy.com/?q={ term }");
         }
 
@@ -376,15 +373,15 @@ namespace DiscordBot.Commands
             var todayTempLow = selectedWeek.FirstOrDefault().QuerySelectorAll(selectorTempToday)[2].TextContent;
 
             //.GetStreamAsync()
-            HttpClient client = new HttpClient();
+            var client = new HttpClient();
             var mainWeatherIconStream = await client.GetStreamAsync($"https:{ selectedMainWeatherIcon.GetAttribute("src") }");
-            MagickImage mainWeatherIcon = new MagickImage(mainWeatherIconStream);
-            List<Weather> weatherList = new List<Weather>();
-            int counter = 0;
+            var mainWeatherIcon = new MagickImage(mainWeatherIconStream);
+            var weatherList = new List<Weather>();
+            var counter = 0;
 
             for (int i = 1; i < selectedWeek.Length; i++)
             {
-                Weather w = new Weather();
+                var w = new Weather();
                 w.Day = selectedWeek[i].QuerySelector("div.vk_lgy").GetAttribute("aria-label");
 
                 var temperatures = selectedWeek[i].QuerySelectorAll("span.wob_t");
@@ -469,10 +466,10 @@ namespace DiscordBot.Commands
             var searchListResponse = await searchListRequest.ExecuteAsync();
             searchListResponse.Items.Select(i => i.Id.Kind == "youtube#video").ToList();
             var searchedVideo = searchListResponse.Items.First();
-            string videoTitle = searchedVideo.Snippet.Title;
-            string videoPublishDate = searchedVideo.Snippet.PublishedAt.Value.ToOrdinalWords();
-            string videoDescription = searchedVideo.Snippet.Description.Truncate(500, "[...]", Truncator.FixedNumberOfCharacters);
-            string videoUrl = $"https://www.youtube.com/watch?v={ searchedVideo.Id.VideoId }";
+            var videoTitle = searchedVideo.Snippet.Title;
+            var videoPublishDate = searchedVideo.Snippet.PublishedAt.Value.ToOrdinalWords();
+            var videoDescription = searchedVideo.Snippet.Description.Truncate(500, "[...]", Truncator.FixedNumberOfCharacters);
+            var videoUrl = $"https://www.youtube.com/watch?v={ searchedVideo.Id.VideoId }";
 
             await ctx.RespondAsync($" ** { videoTitle } **\n `{ videoPublishDate } - { videoDescription }`\n { videoUrl }");
         }
@@ -482,18 +479,18 @@ namespace DiscordBot.Commands
         [RequirePermissions(Permissions.ManageGuild)]
         public async Task Members(CommandContext ctx)
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             var allMembers = await ctx.Guild.GetAllMembersAsync();
             allMembers.OrderBy(m => m.Username)
                 .ToList()
                 .ForEach(m => AppendMemberToString(m, sb));
 
-            HttpClient client = new HttpClient();
+            var client = new HttpClient();
             var content = new StringContent(sb.ToString());
             var response = await client.PostAsync("https://hastebin.com/documents", content);
             var jsonToDeserialize = await response.Content.ReadAsStringAsync();
-            JToken json = JToken.Parse(jsonToDeserialize);
-            string key = json.SelectToken("key").ToString();
+            var json = JToken.Parse(jsonToDeserialize);
+            var key = json.SelectToken("key").ToString();
 
             await ctx.Member.SendMessageAsync($"https://hastebin.com/{ key }");
         }
@@ -511,8 +508,8 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            int rolls = int.Parse(dice.Split('d').ElementAt(0));
-            int sides = int.Parse(dice.Split('d').ElementAt(1));
+            var rolls = int.Parse(dice.Split('d').ElementAt(0));
+            var sides = int.Parse(dice.Split('d').ElementAt(1));
 
             if (rolls < 1 || sides < 1)
             {
@@ -528,13 +525,13 @@ namespace DiscordBot.Commands
 
             if (rolls == 1)
             {
-                int roll = rnd.Next(sides) + 1;
+                var roll = rnd.Next(sides) + 1;
 
                 await ctx.RespondAsync($"You rolled: { roll }");
             } 
             else
             {
-                int[] totalRolls = Enumerable.Range(0, rolls)
+                var totalRolls = Enumerable.Range(0, rolls)
                     .Select(n => n = (rnd.Next(sides) + 1)).ToArray();
                 await ctx.RespondAsync($"You rolled: { totalRolls.Humanize() }");
             }
@@ -552,7 +549,7 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            string rating = ctx.Channel.IsNSFW ? "rating:explicit" : "rating:safe";
+            var rating = ctx.Channel.IsNSFW ? "rating:explicit" : "rating:safe";
 
             if (tags.Equals(""))
             {
@@ -560,10 +557,10 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            using (WebClient client = new WebClient())
+            using (HttpClient client = new HttpClient())
             {
-                string jsonString = client.DownloadString($"https://danbooru.donmai.us/posts.json?random=true&limit=20&tags={ rating } { tags }");
-                JArray json = JArray.Parse(jsonString);
+                var jsonString = await client.GetStringAsync($"https://danbooru.donmai.us/posts.json?random=true&limit=20&tags={ rating } { tags }");
+                var json = JArray.Parse(jsonString);
 
                 if (!json.Any())
                 {
@@ -571,7 +568,7 @@ namespace DiscordBot.Commands
                     return;
                 }
 
-                string pictureId = json.FirstOrDefault().SelectToken("id").ToString();
+                var pictureId = json.FirstOrDefault().SelectToken("id").ToString();
 
                 await ctx.RespondAsync($"http://danbooru.donmai.us/posts/{ pictureId }");
             }
@@ -601,7 +598,7 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            PUBGStatsClient client = new PUBGStatsClient(cfg.ApiKeyPUBG);
+            var client = new PUBGStatsClient(cfg.ApiKeyPUBG);
             var stats = await client.GetPlayerStatsAsync(name);
             var foundStats = stats.Stats.Find(s => s.Mode == pickedMode && s.Region == pickedRegion && s.Season == Seasons.EASeason4).Stats;
 
@@ -616,14 +613,14 @@ namespace DiscordBot.Commands
             var top10Ratio = foundStats.Find(s => s.Stat == Stats.WinTop10Ratio);
             var rating = foundStats.Find(s => s.Stat == Stats.Rating);
 
-            List<StatModel> list = new List<StatModel>()
+            var list = new List<StatModel>()
             {
                 kda, wins, winPercentage, roundsPlayed, top10Rate, top10Ratio, rating
             };
 
-            HttpClient httpclient = new HttpClient();
+            var httpclient = new HttpClient();
             var avatarIcon = await httpclient.GetStreamAsync(avatarUrl);
-            MagickImage avatar = new MagickImage(avatarIcon);
+            var avatar = new MagickImage(avatarIcon);
             using (MagickImage i = new MagickImage("../../Files/Pictures/stats-original.png"))
             {
                 var image = new Drawables().FontPointSize(50)
@@ -645,7 +642,7 @@ namespace DiscordBot.Commands
 
                 foreach (var item in list)
                 {
-                    MagickColor color = GetColorBasedOnPercentile(item.Percentile);
+                    var color = GetColorBasedOnPercentile(item.Percentile);
                     switch (item.Stat)
                     {
                         case "K/D Ratio":
@@ -718,9 +715,9 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            HttpClient httpclient = new HttpClient();
+            var httpclient = new HttpClient();
             var imageStream = await httpclient.GetStreamAsync(url);
-            MagickImage img = new MagickImage(imageStream);
+            var img = new MagickImage(imageStream);
             using (MagickImage i = new MagickImage("../../Files/Pictures/f-original.jpg"))
             {
                 img.Resize(new MagickGeometry("134x197!"));
@@ -752,15 +749,15 @@ namespace DiscordBot.Commands
             var interactivity = ctx.Client.GetInteractivityModule();
             term = term.Replace(' ', '+');
 
-            using (WebClient client = new WebClient())
+            using (HttpClient client = new HttpClient())
             {
-                string value = client.DownloadString($"https://www.googleapis.com/customsearch/v1?key={ cfg.ApiKeyGoogleSearch }&cx={ cfg.CxGoogleSearch }&q={ term }&num=10&searchType=image");
-                JToken token = JToken.Parse(value);
+                var value = await client.GetStringAsync($"https://www.googleapis.com/customsearch/v1?key={ cfg.ApiKeyGoogleSearch }&cx={ cfg.CxGoogleSearch }&q={ term }&num=10&searchType=image");
+                var token = JToken.Parse(value);
                 var items = token.SelectToken("items");
-                int position = 0;
-                bool param = true;
+                var position = 0;
+                var param = true;
 
-                DiscordEmbed embed = GetPictureEmbed(items, position);
+                var embed = GetPictureEmbed(items, position);
 
                 var msg = await ctx.RespondAsync("", embed: embed);
 
@@ -789,13 +786,8 @@ namespace DiscordBot.Commands
                                     position = items.Count() - 1;
                                 else
                                     position--;
-                                embed = GetPictureEmbed(items, position);
-                                await msg.DeleteAllReactionsAsync();
-                                msg = await msg.ModifyAsync("", embed: embed);
-                                await msg.CreateReactionAsync(arrowBackward);
-                                await msg.CreateReactionAsync(arrowForward);
-                                await msg.CreateReactionAsync(pauseButton);
-                                await msg.CreateReactionAsync(stopButton);
+
+                                await ShowNewImage(embed, msg, emojiList, items, position);
                                 break;
                             // :arrow_forward: emoji
                             case ":arrow_forward:":
@@ -803,13 +795,8 @@ namespace DiscordBot.Commands
                                     position = 0;
                                 else
                                     position++;
-                                embed = GetPictureEmbed(items, position);
-                                await msg.DeleteAllReactionsAsync();
-                                msg = await msg.ModifyAsync("", embed: embed);
-                                await msg.CreateReactionAsync(arrowBackward);
-                                await msg.CreateReactionAsync(arrowForward);
-                                await msg.CreateReactionAsync(pauseButton);
-                                await msg.CreateReactionAsync(stopButton);
+
+                                await ShowNewImage(embed, msg, emojiList, items, position);
                                 break;
                             // :pause_button: emoji
                             case ":pause_button:":
@@ -835,22 +822,12 @@ namespace DiscordBot.Commands
             }
         }
 
-        [Command("info")]
+        [Command("userinfo")]
         [Description("Gives info about a user in the guild")]
-        public async Task Info(CommandContext ctx, [RemainingText][Description("The user name, mentioned or just written down normally")] string name)
+        [Aliases("uinfo")]
+        public async Task UserInfo(CommandContext ctx, [RemainingText][Description("The user name, mentioned or just written down normally")] string name)
         {
-            DiscordMember user;
-            if (name.Contains('@'))
-            {
-                var userId = new string(name.Where(char.IsDigit).ToArray());
-                var userIdLong = ulong.Parse(userId);
-                user = await ctx.Guild.GetMemberAsync(userIdLong);
-            }
-            else
-            {
-                var userList = await ctx.Guild.GetAllMembersAsync();
-                user = userList.FirstOrDefault(m => (m.Username != null ? m.Username.ToLower() == name.ToLower() : false) || (m.Nickname != null ? m.Nickname.ToLower() == name.ToLower() : false));
-            }
+            var user = await GetDiscordMemberFromStringAsync(ctx, name);
 
             if (user == null)
             {
@@ -858,16 +835,41 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            DiscordEmbed embed = new DiscordEmbedBuilder().WithColor(DiscordColor.SpringGreen)
+            var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.SpringGreen)
                 .WithAuthor(ctx.Member.DisplayName, ctx.Member.AvatarUrl, ctx.Member.AvatarUrl)
                 .WithTitle("Information about the user")
                 .WithThumbnailUrl(user.AvatarUrl)
                 .AddField("Username", $"{ user.Username }#{ user.Discriminator }", true)
+                .AddField("User Id", user.Id.ToString(), true)
                 .AddField("Nickname", $"{ user.Nickname ?? "None" }", true)
-                .AddField("Date joined", $"{ user.JoinedAt.Humanize() }", true)
-                .AddField("Exact date joined", $"{ user.JoinedAt.ToString("dd/MM/yyyy HH:mm:ss") }", true)
-                .AddField("Number of roles", $"{ user.Roles.Count() }", true)
-                .AddField("Roles", $"{ (user.Roles.Count() == 0 ? "None" : user.Roles.Select(r => r.Name).ToList().Humanize(", ")) }", true)
+                .AddField("Date Joined", $"{ user.JoinedAt.ToString("dd/MM/yyyy HH:mm:ss") }", true)
+                .AddField("Role No.", $"{ user.Roles.Count() }", true)
+                .AddField("Role Names", $"{ (user.Roles.Count() == 0 ? "None" : user.Roles.Select(r => r.Name).ToList().Humanize(xs => $"`{ xs }`")) }", false)
+                .WithFooter($"{ ctx.Member.Username }#{ ctx.Member.Discriminator }", ctx.Member.AvatarUrl)
+                .WithTimestamp(DateTime.Now);
+
+            await ctx.RespondAsync(embed: embed);
+        }
+
+        [Command("serverinfo")]
+        [Description("Gives info about the guild")]
+        [Aliases("guildinfo", "sinfo", "ginfo")]
+        public async Task ServerInfo(CommandContext ctx)
+        {
+            var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.HotPink)
+                .WithAuthor(ctx.Guild.Name, ctx.Guild.IconUrl, ctx.Guild.IconUrl)
+                .WithTitle("Information about the guild")
+                .WithThumbnailUrl(ctx.Guild.IconUrl)
+                .AddField("Guild Name", ctx.Guild.Name, true)
+                .AddField("Guild Id", ctx.Guild.Id.ToString(), true)
+                .AddField("Guild Owner", $"{ ctx.Guild.Owner.Username }#{ ctx.Guild.Owner.Discriminator }", true)
+                .AddField("Date Created", ctx.Guild.CreationTimestamp.ToString("dd/MM/yyyy HH:mm:ss"), true)
+                .AddField("Large Guild?", ctx.Guild.IsLarge ? "Yes" : "No", true)
+                .AddField("Guild Region", ctx.Guild.RegionId, true)
+                .AddField("Guild Emojis No.", ctx.Guild.Emojis.Count.ToString(), true)
+                .AddField("Member No.", ctx.Guild.MemberCount.ToString(), true)
+                .AddField("Role No.", ctx.Guild.Roles.Count.ToString(), true)
+                .AddField("Role Names", ctx.Guild.Roles.Humanize(xr => $"`{ xr.Name }`"), true)
                 .WithFooter($"{ ctx.Member.Username }#{ ctx.Member.Discriminator }", ctx.Member.AvatarUrl)
                 .WithTimestamp(DateTime.Now);
 
@@ -888,13 +890,15 @@ namespace DiscordBot.Commands
         [Command("mute")]
         [Description("Mutes an user")]
         [RequireOwner]
-        public async Task Mute(CommandContext ctx, [Description("The user you want to mute, mentioned")] DiscordMember user, [Description("Duration of mute")] TimeSpan duration)
+        public async Task Mute(CommandContext ctx, [Description("The user you want to mute, mentioned")] string name, [Description("Duration of mute")] TimeSpan duration)
         {
             if (ctx.Guild.Roles.FirstOrDefault(xr => xr.Name == "Muted") == null)
             {
                 await ctx.RespondAsync("Please run `!setmute` command first to make this command work effectively..");
                 return;
             }
+
+            var user = await GetDiscordMemberFromStringAsync(ctx, name);
 
             if (user.Id == 258902871720984577)
             {
@@ -947,7 +951,7 @@ namespace DiscordBot.Commands
         [RequirePermissions(Permissions.ManageChannels)]
         public async Task Pin(CommandContext ctx, [Description("ID of the message you want to pin")] ulong id)
         {
-            DiscordMessage msg = await ctx.Channel.GetMessageAsync(id);
+            var msg = await ctx.Channel.GetMessageAsync(id);
 
             await msg.PinAsync();
         }
@@ -965,17 +969,18 @@ namespace DiscordBot.Commands
         [Hidden]
         public async Task Test(CommandContext ctx)
         {
-
+            var bla = await ctx.Guild.GetVoiceRegionsAsync();
+            await ctx.RespondAsync(bla.FirstOrDefault(xvr => xvr.Id == ctx.Guild.RegionId).Name);
         }
 
         [Command("game")]
         [RequireOwner]
         [Hidden]
         [Aliases("playing", "status")]
-        public async Task Game(CommandContext ctx, [RemainingText] string game)
+        public async Task Game(CommandContext ctx, [RemainingText] string status)
         {
-            DiscordGame g = new DiscordGame(game);
-            await ctx.Client.UpdateStatusAsync(g);
+            var game = new DiscordGame(status);
+            await ctx.Client.UpdateStatusAsync(game);
         }
 
         [Command("name")]
@@ -991,8 +996,8 @@ namespace DiscordBot.Commands
         [Hidden]
         public async Task Avatar(CommandContext ctx, string avatarLink)
         {
-            WebClient client = new WebClient();
-            MemoryStream stream = new MemoryStream(client.DownloadData(avatarLink));
+            var client = new HttpClient();
+            var stream = await client.GetStreamAsync(avatarLink);
 
             await ctx.Client.EditCurrentUserAsync(null, stream);
         }
@@ -1002,15 +1007,9 @@ namespace DiscordBot.Commands
             sb.Append($"Name: { m.Username }#{ m.Discriminator }, Nickname: { m.Nickname ?? "NO NICKNAME" }, Date joined: { m.JoinedAt.Date.Humanize() } ({ m.JoinedAt.Date.ToString("dd/MM/yyyy") })\n");
         }
 
-        private string GetWindDirectionFromDegrees(double deg)
-        {
-            int index = (int) Math.Round(deg / 11.25 / 2);
-            return weatherDirections[index];
-        }
-
         private bool IsActionOnCoolDown()
         {
-            double secondsPassed = DateTime.Now.Subtract(cooldown).Seconds;
+            var secondsPassed = DateTime.Now.Subtract(cooldown).Seconds;
 
             if (secondsPassed < 10)
             {
@@ -1023,10 +1022,10 @@ namespace DiscordBot.Commands
             return false;
         }
 
-        private List<int> RandomDistinctNumbers(int minNumber, int maxNumber, int numberOfNumbers)
+        private List<int> GetRandomDistinctNumbers(int minNumber, int maxNumber, int numberOfNumbers)
         {
-            List<int> numbers = new List<int>();
-            int number = 0;
+            var numbers = new List<int>();
+            var number = 0;
 
             while (numbers.Capacity < numberOfNumbers)
             {
@@ -1082,8 +1081,40 @@ namespace DiscordBot.Commands
             var url = items[position].SelectToken("link").ToString();
             return new DiscordEmbedBuilder().WithColor(DiscordColor.Cyan)
                 .WithTitle($"Picture { position + 1 }/{ items.Count() }")
-                .WithFooter("Image search result")
+                .WithFooter("Image Search Result")
                 .WithImageUrl(url);
+        }
+
+        private async Task ShowNewImage(DiscordEmbed embed, DiscordMessage msg, List<DiscordEmoji> emojiList, JToken items, int position)
+        {
+            embed = GetPictureEmbed(items, position);
+
+            await msg.DeleteAllReactionsAsync();
+            msg = await msg.ModifyAsync("", embed: embed);
+
+            foreach (var emoji in emojiList)
+            {
+                await msg.CreateReactionAsync(emoji);
+            }
+        }
+
+        private async Task<DiscordMember> GetDiscordMemberFromStringAsync(CommandContext ctx, string name)
+        {
+            DiscordMember user;
+
+            if (name.Contains('@'))
+            {
+                var userId = new string(name.Where(char.IsDigit).ToArray());
+                var userIdLong = ulong.Parse(userId);
+                user = await ctx.Guild.GetMemberAsync(userIdLong);
+            }
+            else
+            {
+                var userList = await ctx.Guild.GetAllMembersAsync();
+                user = userList.FirstOrDefault(m => (m.Username != null ? m.Username.ToLower() == name.ToLower() : false) || (m.Nickname != null ? m.Nickname.ToLower() == name.ToLower() : false));
+            }
+
+            return user;
         }
     }
 }
