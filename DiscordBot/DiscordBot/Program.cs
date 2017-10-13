@@ -205,7 +205,7 @@ namespace DiscordBot
 
         private Task Client_ClientErrored(ClientErrorEventArgs e)
         {
-            e.Client.DebugLogger.LogMessage(LogLevel.Error, "Bot", $"Exception occured: { e.Exception.GetType() }: {e.Exception.Message } ({ e.Exception.InnerException }", DateTime.Now);
+            e.Client.DebugLogger.LogMessage(LogLevel.Error, "Bot", $"Exception occured: { e.Exception.GetType() }: { e.Exception.Message } ({ e.Exception.InnerException }", DateTime.Now);
 
             return Task.CompletedTask;
         }
