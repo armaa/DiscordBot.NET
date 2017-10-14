@@ -28,7 +28,7 @@ namespace DiscordBot
 
         static void Main(string[] args)
         {
-            Program program = new Program();
+            var program = new Program();
             program.Bot().GetAwaiter().GetResult();
         }
 
@@ -81,7 +81,7 @@ namespace DiscordBot
 
         private async Task Client_GuildMemberUpdated(GuildMemberUpdateEventArgs e)
         {
-            DiscordMember bot = await e.Guild.GetMemberAsync(258902871720984577);
+            var bot = await e.Guild.GetMemberAsync(258902871720984577);
             var channel = e.Guild.Channels.FirstOrDefault(c => c.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
 
             if (e.NicknameAfter == null && e.NicknameBefore == null || e.NicknameBefore == e.NicknameAfter)
@@ -117,10 +117,15 @@ namespace DiscordBot
         {
             e.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"New member joined { e.Guild.Name } guild.", DateTime.Now);
 
-            DiscordMember bot = await e.Guild.GetMemberAsync(258902871720984577);
-            var channel = e.Guild.Channels.FirstOrDefault(c => c.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
+            var bot = await e.Guild.GetMemberAsync(258902871720984577);
+            var channel = e.Guild.Channels.FirstOrDefault(xc => xc.PermissionsFor(bot).ToPermissionString().Contains("Send message"));
 
-            await channel.SendMessageAsync($"Welcome to our new member { e.Member.Mention }!");
+            var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.Green)
+                .WithAuthor(e.Member.Username, e.Member.AvatarUrl, e.Member.AvatarUrl)
+                .AddField("New Member Joined", "Welcome to our new member")
+                .AddField("Account Cretion Date", $"{ e.Member.CreationTimestamp.ToString("dd/MM/yyyy HH:mm:ss") } ({ e.Member.CreationTimestamp.Humanize() })");
+
+            await channel.SendMessageAsync(embed: embed);
             
             if (e.Guild.Id == 227847810152792064)
             {
@@ -144,6 +149,7 @@ namespace DiscordBot
             foreach (var emoji in emojiList)
             {
                 await msg.CreateReactionAsync(emoji);
+                Task.Delay(250);
             }
 
             var reaction = await interactivity.WaitForReactionAsync(xe => emojiList.Contains(xe), e.Member, TimeSpan.FromSeconds(60));
@@ -270,7 +276,7 @@ namespace DiscordBot
 
                 else if (e.Message.Content.ToLower().StartsWith("https://boards.4chan.org/"))
                 {
-                    var urlArray = e.Message.Content.ToLower().TakeWhile(m => !m.Equals('#')).ToArray();
+                    var urlArray = e.Message.Content.ToLower().TakeWhile(m => !m.Equals(' ')).ToArray();
                     var url = new string(urlArray);
 
                     var req = new AngleSharp.Network.Default.HttpRequester();
@@ -287,7 +293,7 @@ namespace DiscordBot
                     var selectedImage = $"https:{ doc.QuerySelector(selectorImage).GetAttribute("href") }";
                     var selectedPost = doc.QuerySelector(selectorPost);
 
-                    DiscordEmbed embed = new DiscordEmbedBuilder().WithColor(DiscordColor.Lilac)
+                    var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.Lilac)
                         .WithDescription($"Preview for [link]({ url }) posted by `{ e.Author.Username }#{ e.Author.Discriminator }`")
                         .WithTimestamp(DateTime.Now)
                         .AddField("Op message", selectedPost.TextContent.Truncate(500, "[...]", Truncator.FixedNumberOfCharacters))

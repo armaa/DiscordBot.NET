@@ -887,6 +887,19 @@ namespace DiscordBot.Commands
             var t = new Timer(async e => await user.SendMessageAsync(message), null, time, TimeSpan.FromMilliseconds(-1));
         }
 
+        [Command("color")]
+        public async Task Color(CommandContext ctx, byte r, byte g, byte b)
+        {
+            var hex = GetHexValueFromRgb(r, g, b);
+            var HSL = GetHSLValueFromRgb(r, g, b);
+            // More color values
+            var embed = new DiscordEmbedBuilder().WithColor(new DiscordColor(r, g, b))
+                .AddField("Hex Value", hex, true)
+                .AddField("HSL Value", HSL, true);
+
+            await ctx.RespondAsync(embed: embed);
+        }
+
         [Command("mute")]
         [Description("Mutes an user")]
         [RequireOwner]
@@ -969,8 +982,7 @@ namespace DiscordBot.Commands
         [Hidden]
         public async Task Test(CommandContext ctx)
         {
-            var bla = await ctx.Guild.GetVoiceRegionsAsync();
-            await ctx.RespondAsync(bla.FirstOrDefault(xvr => xvr.Id == ctx.Guild.RegionId).Name);
+
         }
 
         [Command("game")]
@@ -1111,10 +1123,64 @@ namespace DiscordBot.Commands
             else
             {
                 var userList = await ctx.Guild.GetAllMembersAsync();
-                user = userList.FirstOrDefault(m => (m.Username != null ? m.Username.ToLower() == name.ToLower() : false) || (m.Nickname != null ? m.Nickname.ToLower() == name.ToLower() : false));
+                user = userList.FirstOrDefault(xm => (xm.Username != null ? xm.Username.ToLower() == name.ToLower() : false) || (xm.Nickname != null ? xm.Nickname.ToLower() == name.ToLower() : false));
             }
 
             return user;
+        }
+
+        private string GetHexValueFromRgb(byte r, byte g, byte b)
+        {
+            var rHex = r.ToString("X");
+            var gHex = g.ToString("X");
+            var bHex = b.ToString("X");
+
+            return $"#{ rHex }{ gHex }{ bHex }";
+        }
+
+        private string GetHSLValueFromRgb(byte r, byte g, byte b)
+        {
+            var rDivided = r / 255.0;
+            var gDivided = g / 255.0;
+            var bDivided = b / 255.0;
+            var max = new double[] { rDivided, gDivided, bDivided }.Max();
+            var min = new double[] { rDivided, gDivided, bDivided }.Min();
+            var luminace = Math.Round((max + min) / 0.02);
+            var saturation = 0.0;
+            var hue = 0.0;
+
+            if (max != min)
+            {
+                saturation = luminace > 0.5
+                    ? (max - min) / (max + min)
+                    : (max - min) / (2.0 - max - min);
+                saturation = Math.Round(saturation * 100);
+            }
+
+            if (max == rDivided)
+            {
+                hue = (gDivided - bDivided) / (max - min);
+            }
+            else if (max == gDivided)
+            {
+                hue = 2.0 + (bDivided - rDivided) / (max - min);
+            }
+            else
+            {
+                hue = 4.0 + (rDivided - gDivided) / (max - min);
+            }
+
+            if (hue != 0)
+            {
+                hue = Math.Round(hue * 60);
+            }
+
+            if (hue < 0)
+            {
+                hue += 360;
+            }
+
+            return $"H: { hue }°, S: { saturation }%, L: { luminace }%";
         }
     }
 }
