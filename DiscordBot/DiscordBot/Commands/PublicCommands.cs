@@ -827,6 +827,14 @@ namespace DiscordBot.Commands
         [Aliases("uinfo")]
         public async Task UserInfo(CommandContext ctx, [RemainingText][Description("The user name, mentioned or just written down normally")] string name)
         {
+            await ctx.TriggerTypingAsync();
+
+            if (IsActionOnCoolDown())
+            {
+                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
+                return;
+            }
+
             var user = await GetDiscordMemberFromStringAsync(ctx, name);
 
             if (user == null)
@@ -856,6 +864,14 @@ namespace DiscordBot.Commands
         [Aliases("guildinfo", "sinfo", "ginfo")]
         public async Task ServerInfo(CommandContext ctx)
         {
+            await ctx.TriggerTypingAsync();
+
+            if (IsActionOnCoolDown())
+            {
+                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
+                return;
+            }
+
             var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.HotPink)
                 .WithAuthor(ctx.Guild.Name, ctx.Guild.IconUrl, ctx.Guild.IconUrl)
                 .WithTitle("Information about the guild")
@@ -890,12 +906,25 @@ namespace DiscordBot.Commands
         [Command("color")]
         public async Task Color(CommandContext ctx, byte r, byte g, byte b)
         {
+            await ctx.TriggerTypingAsync();
+
+            if (IsActionOnCoolDown())
+            {
+                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
+                return;
+            }
+
             var hex = GetHexValueFromRgb(r, g, b);
             var HSL = GetHSLValueFromRgb(r, g, b);
+            var CMYK = GetCMYKValueFromRgb(r, g, b);
             // More color values
             var embed = new DiscordEmbedBuilder().WithColor(new DiscordColor(r, g, b))
+                .WithAuthor(ctx.Member.Username, ctx.Member.AvatarUrl, ctx.Member.AvatarUrl)
+                .WithTitle("Some information about the color")
+                .WithDescription("The actual color you requested is on the left of the embed")
                 .AddField("Hex Value", hex, true)
-                .AddField("HSL Value", HSL, true);
+                .AddField("HSL Value", HSL, true)
+                .AddField("CMYK Value", CMYK, true);
 
             await ctx.RespondAsync(embed: embed);
         }
@@ -1131,56 +1160,40 @@ namespace DiscordBot.Commands
 
         private string GetHexValueFromRgb(byte r, byte g, byte b)
         {
-            var rHex = r.ToString("X");
-            var gHex = g.ToString("X");
-            var bHex = b.ToString("X");
+            var rHex = r.ToString("X2");
+            var gHex = g.ToString("X2");
+            var bHex = b.ToString("X2");
 
             return $"#{ rHex }{ gHex }{ bHex }";
         }
 
         private string GetHSLValueFromRgb(byte r, byte g, byte b)
         {
-            var rDivided = r / 255.0;
-            var gDivided = g / 255.0;
-            var bDivided = b / 255.0;
-            var max = new double[] { rDivided, gDivided, bDivided }.Max();
-            var min = new double[] { rDivided, gDivided, bDivided }.Min();
-            var luminace = Math.Round((max + min) / 0.02);
-            var saturation = 0.0;
-            var hue = 0.0;
+            var color = MagickColor.FromRgb(r, g, b);
+            var HSLColor = ColorHSL.FromMagickColor(color);
 
-            if (max != min)
-            {
-                saturation = luminace > 0.5
-                    ? (max - min) / (max + min)
-                    : (max - min) / (2.0 - max - min);
-                saturation = Math.Round(saturation * 100);
-            }
-
-            if (max == rDivided)
-            {
-                hue = (gDivided - bDivided) / (max - min);
-            }
-            else if (max == gDivided)
-            {
-                hue = 2.0 + (bDivided - rDivided) / (max - min);
-            }
-            else
-            {
-                hue = 4.0 + (rDivided - gDivided) / (max - min);
-            }
-
-            if (hue != 0)
-            {
-                hue = Math.Round(hue * 60);
-            }
-
-            if (hue < 0)
-            {
-                hue += 360;
-            }
+            var hue = Math.Round(HSLColor.Hue * 360);
+            var saturation = Math.Round(HSLColor.Saturation * 100);
+            var luminace = Math.Round(HSLColor.Lightness * 100);
 
             return $"H: { hue }°, S: { saturation }%, L: { luminace }%";
         }
+
+        private string GetCMYKValueFromRgb(byte r, byte g, byte b)
+        {
+            var color = MagickColor.FromRgb(r, g, b);
+            var CMYKColor = ColorCMYK.FromMagickColor(color);
+
+            var c = CMYKColor.C;
+            var m = CMYKColor.M;
+            var y = CMYKColor.Y;
+
+            return $"C: { c }, M: { m }, Y: { y }";
+        }
+
+        //private string blbla(byte r, byte g, byte b)
+        //{
+        //    var a = color
+        //}
     }
 }
