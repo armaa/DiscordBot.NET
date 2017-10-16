@@ -892,16 +892,16 @@ namespace DiscordBot.Commands
             await ctx.RespondAsync(embed: embed);
         }
 
-        [Command("reminder")]
-        [Description("Sets a reminder for you")]
-        [Aliases("remind", "remindme")]
-        public async Task Reminder(CommandContext ctx, [Description("Time, from now, at which you should get the reminder")] TimeSpan time, [RemainingText][Description("Message of the reminder")] string message = "Reminder for something important you asked to be reminded of.")
-        {
-            var date = DateTime.Now.Add(time);
-            var user = ctx.Member;
-            await ctx.RespondAsync($"Reminder set for { date.Humanize(false, DateTime.Now) } with the message saying: ```{ message }```");
-            var t = new Timer(async e => await user.SendMessageAsync(message), null, time, TimeSpan.FromMilliseconds(-1));
-        }
+        //[Command("reminder")]
+        //[Description("Sets a reminder for you")]
+        //[Aliases("remind", "remindme")]
+        //public async Task Reminder(CommandContext ctx, [Description("Time, from now, at which you should get the reminder")] TimeSpan time, [RemainingText][Description("Message of the reminder")] string message = "Reminder for something important you asked to be reminded of.")
+        //{
+        //    var date = DateTime.Now.Add(time);
+        //    var user = ctx.Member;
+        //    await ctx.RespondAsync($"Reminder set for { date.Humanize(false, DateTime.Now) } with the message saying: ```{ message }```");
+        //    var t = new Timer(async e => await user.SendMessageAsync(message), null, time, TimeSpan.FromMilliseconds(-1));
+        //}
 
         [Command("color")]
         public async Task Color(CommandContext ctx, byte r, byte g, byte b)
@@ -1190,10 +1190,5 @@ namespace DiscordBot.Commands
 
             return $"C: { c }, M: { m }, Y: { y }";
         }
-
-        //private string blbla(byte r, byte g, byte b)
-        //{
-        //    var a = color
-        //}
     }
 }
