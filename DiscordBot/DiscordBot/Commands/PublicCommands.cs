@@ -36,6 +36,8 @@ namespace DiscordBot.Commands
         private IConfiguration angleSharpConfiguration = AngleSharpConfigurationWithUserAgent();
         private ConfigJson cfg = ConfigJson.GetConfigJson();
         private Permissions mutedRolePermissions = Permissions.AccessChannels | Permissions.AddReactions | Permissions.ChangeNickname | Permissions.CreateInstantInvite | Permissions.ReadMessageHistory;
+        private Permissions assignRolePermissions = Permissions.Administrator | Permissions.BanMembers | Permissions.DeafenMembers | Permissions.KickMembers | Permissions.ManageChannels | Permissions.ManageEmojis
+            | Permissions.ManageGuild | Permissions.ManageMessages | Permissions.ManageNicknames | Permissions.ManageRoles | Permissions.ManageWebhooks | Permissions.MoveMembers | Permissions.MuteMembers | Permissions.ViewAuditLog;
 
         [Command("uptime")]
         [Description("Gives the time how long has the bot been running for")]
@@ -290,8 +292,8 @@ namespace DiscordBot.Commands
             var selectorScores = "div.js-top-ranking-score-col.di-ib.al span";
             var selectedTitles = doc.QuerySelectorAll(selectorTitles);
             var selectedScores = doc.QuerySelectorAll(selectorScores);
-            var titles = selectedTitles.Select(t => t.TextContent).ToList();
-            var scores = selectedScores.Select(s => s.TextContent).ToList();
+            var titles = selectedTitles.Select(xt => xt.TextContent).ToList();
+            var scores = selectedScores.Select(xs => xs.TextContent).ToList();
 
             var randomNumbers = GetRandomDistinctNumbers(0, 50, 5);
 
@@ -464,7 +466,7 @@ namespace DiscordBot.Commands
             searchListRequest.MaxResults = 5;
 
             var searchListResponse = await searchListRequest.ExecuteAsync();
-            searchListResponse.Items.Select(i => i.Id.Kind == "youtube#video").ToList();
+            searchListResponse.Items.Select(xi => xi.Id.Kind == "youtube#video").ToList();
             var searchedVideo = searchListResponse.Items.First();
             var videoTitle = searchedVideo.Snippet.Title;
             var videoPublishDate = searchedVideo.Snippet.PublishedAt.Value.ToOrdinalWords();
@@ -481,9 +483,9 @@ namespace DiscordBot.Commands
         {
             var sb = new StringBuilder();
             var allMembers = await ctx.Guild.GetAllMembersAsync();
-            allMembers.OrderBy(m => m.Username)
+            allMembers.OrderBy(xm => xm.Username)
                 .ToList()
-                .ForEach(m => AppendMemberToString(m, sb));
+                .ForEach(xm => AppendMemberToString(xm, sb));
 
             var client = new HttpClient();
             var content = new StringContent(sb.ToString());
@@ -532,7 +534,7 @@ namespace DiscordBot.Commands
             else
             {
                 var totalRolls = Enumerable.Range(0, rolls)
-                    .Select(n => n = (rnd.Next(sides) + 1)).ToArray();
+                    .Select(xn => xn = (rnd.Next(sides) + 1)).ToArray();
                 await ctx.RespondAsync($"You rolled: { totalRolls.Humanize() }");
             }
         }
@@ -600,18 +602,18 @@ namespace DiscordBot.Commands
 
             var client = new PUBGStatsClient(cfg.ApiKeyPUBG);
             var stats = await client.GetPlayerStatsAsync(name);
-            var foundStats = stats.Stats.Find(s => s.Mode == pickedMode && s.Region == pickedRegion && s.Season == Seasons.EASeason4).Stats;
+            var foundStats = stats.Stats.Find(xs => xs.Mode == pickedMode && xs.Region == pickedRegion && xs.Season == Seasons.EASeason5).Stats;
 
             var avatarUrl = stats.Avatar;
             avatarUrl = $"{ avatarUrl.Substring(0, avatarUrl.LastIndexOf('.')) }_medium.jpg";
             var playerName = stats.PlayerName;
-            var kda = foundStats.Find(s => s.Stat == Stats.KDR);
-            var wins = foundStats.Find(s => s.Stat == Stats.Wins);
-            var winPercentage = foundStats.Find(s => s.Stat == Stats.WinPercentage);
-            var roundsPlayed = foundStats.Find(s => s.Stat == Stats.RoundsPlayed);
-            var top10Rate = foundStats.Find(s => s.Stat == Stats.Top10Rate);
-            var top10Ratio = foundStats.Find(s => s.Stat == Stats.WinTop10Ratio);
-            var rating = foundStats.Find(s => s.Stat == Stats.Rating);
+            var kda = foundStats.Find(xs => xs.Stat == Stats.KDR);
+            var wins = foundStats.Find(xs => xs.Stat == Stats.Wins);
+            var winPercentage = foundStats.Find(xs => xs.Stat == Stats.WinPercentage);
+            var roundsPlayed = foundStats.Find(xs => xs.Stat == Stats.RoundsPlayed);
+            var top10Rate = foundStats.Find(xs => xs.Stat == Stats.Top10Rate);
+            var top10Ratio = foundStats.Find(xs => xs.Stat == Stats.WinTop10Ratio);
+            var rating = foundStats.Find(xs => xs.Stat == Stats.Rating);
 
             var list = new List<StatModel>()
             {
@@ -852,7 +854,7 @@ namespace DiscordBot.Commands
                 .AddField("Nickname", $"{ user.Nickname ?? "None" }", true)
                 .AddField("Date Joined", $"{ user.JoinedAt.ToString("dd/MM/yyyy HH:mm:ss") }", true)
                 .AddField("Role No.", $"{ user.Roles.Count() }", true)
-                .AddField("Role Names", $"{ (user.Roles.Count() == 0 ? "None" : user.Roles.Select(r => r.Name).ToList().Humanize(xs => $"`{ xs }`")) }", false)
+                .AddField("Role Names", $"{ (user.Roles.Count() == 0 ? "None" : user.Roles.Select(xr => xr.Name).ToList().Humanize(xs => $"`{ xs }`")) }", false)
                 .WithFooter($"{ ctx.Member.Username }#{ ctx.Member.Discriminator }", ctx.Member.AvatarUrl)
                 .WithTimestamp(DateTime.Now);
 
@@ -924,9 +926,65 @@ namespace DiscordBot.Commands
                 .WithDescription("The actual color you requested is on the left of the embed")
                 .AddField("Hex Value", hex, true)
                 .AddField("HSL Value", HSL, true)
-                .AddField("CMYK Value", CMYK, true);
+                .AddField("CMYK Value", CMYK, true)
+                .WithFooter($"{ ctx.Member.Username }#{ ctx.Member.Discriminator }", ctx.Member.AvatarUrl)
+                .WithTimestamp(DateTime.Now); ;
 
             await ctx.RespondAsync(embed: embed);
+        }
+
+        [Command("showroles")]
+        [Description("Shows the roles that are present on the server, for easier usage of `assignrole` command")]
+        [Aliases("roles")]
+        public async Task ShowRoles(CommandContext ctx)
+        {
+            var roles = ctx.Guild.Roles;
+
+            var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.SpringGreen)
+                .WithAuthor(ctx.User.Username, ctx.User.AvatarUrl, ctx.User.AvatarUrl)
+                .WithTitle("Roles")
+                .WithDescription("Showing all the roles on the server")
+                .AddField("Roles available", roles.Humanize(xr => $"`{ xr.Name }`"))
+                .WithFooter($"{ ctx.Member.Username }#{ ctx.Member.Discriminator }", ctx.Member.AvatarUrl)
+                .WithTimestamp(DateTime.Now);
+
+            await ctx.RespondAsync(embed: embed);
+        }
+
+        [Command("assignrole")]
+        [Description("Grants a role to a user who calls the command, with a supplied name of the role")]
+        [Aliases("giverole", "grantrole")]
+        public async Task AssignRole(CommandContext ctx, [Description("The name of the role")] string name)
+        {
+            if (IsActionOnCoolDown())
+            {
+                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
+                return;
+            }
+
+            var role = ctx.Guild.Roles.FirstOrDefault(xr => xr.Name.ToLower() == name.ToLower());
+
+            if (role == null)
+            {
+                await ctx.RespondAsync("Role doesnt exist, maybe try using `showroles` command first to see which roles exist on the server");
+                return;
+            }
+
+            if (ctx.Member.Roles.Contains(role))
+            {
+                await ctx.RespondAsync("You already have that role!");
+                return;
+            }
+
+            var IsAllowedToAssign = role.CheckPermission(assignRolePermissions);
+
+            if (IsAllowedToAssign.Humanize() == "Allowed")
+            {
+                await ctx.RespondAsync("You cant assign that role to yourself.");
+                return;
+            }
+
+            await ctx.Member.GrantRoleAsync(role);
         }
 
         [Command("mute")]

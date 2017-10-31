@@ -82,7 +82,7 @@ namespace DiscordBot
         private async Task Client_GuildMemberUpdated(GuildMemberUpdateEventArgs e)
         {
             var bot = await e.Guild.GetMemberAsync(258902871720984577);
-            var channel = e.Guild.Channels.FirstOrDefault(c => c.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
+            var channel = e.Guild.Channels.FirstOrDefault(xc => xc.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
 
             if (e.NicknameAfter == null && e.NicknameBefore == null || e.NicknameBefore == e.NicknameAfter)
             {
@@ -92,7 +92,11 @@ namespace DiscordBot
                     {
                         if (!e.RolesBefore.Contains(role))
                         {
-                            await channel.SendMessageAsync($"User `{ e.Member.Username }` has been assigned a role, `{ role.Name }`.");
+                            var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.Green)
+                                .WithAuthor(e.Member.Username, e.Member.AvatarUrl, e.Member.AvatarUrl)
+                                .AddField("Role Assigned", $"`{ role.Name }`, Role Id: { role.Id }")
+                                .AddField("Role Permissions", role.Permissions.ToPermissionString());
+                            await channel.SendMessageAsync(embed: embed);
                         }
                     }
                 }
@@ -102,7 +106,11 @@ namespace DiscordBot
                     {
                         if (!e.RolesAfter.Contains(role))
                         {
-                            await channel.SendMessageAsync($"User `{ e.Member.Username }` has been removed a role, `{ role.Name }`.");
+                            var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.Red)
+                                .WithAuthor(e.Member.Username, e.Member.AvatarUrl, e.Member.AvatarUrl)
+                                .AddField("Role Removed", $"`{ role.Name }`, Role Id: { role.Id }")
+                                .AddField("Role Permissions", role.Permissions.ToPermissionString());
+                            await channel.SendMessageAsync(embed: embed);
                         }
                     }
                 }
@@ -227,7 +235,7 @@ namespace DiscordBot
         {
             e.Context.Client.DebugLogger.LogMessage(LogLevel.Error, "Bot", $"{ e.Context.User.Username } tried executing '{ e.Command?.QualifiedName ?? "<unknown command>" }' but it errored: { e.Exception.GetType() }: { e.Exception.Message ?? "<no message>" }", DateTime.Now);
 
-            if (e.Exception is ChecksFailedException ex)
+            if (e.Exception is ChecksFailedException)
             {
                 var emoji = DiscordEmoji.FromName(e.Context.Client, ":no_entry:");
 
@@ -237,7 +245,7 @@ namespace DiscordBot
 
                 await e.Context.RespondAsync("", embed: embed);
             }
-            else
+            else if (!(e.Exception is CommandNotFoundException))
             {
                 var embed = new DiscordEmbedBuilder()
                     .AddField("An exception occured when executing a command", e.Exception.GetType().ToString())
@@ -247,6 +255,10 @@ namespace DiscordBot
                     .WithFooter($"{ client.CurrentUser.Username }#{ client.CurrentUser.Discriminator }", client.CurrentUser.AvatarUrl);
                 
                 await e.Context.Channel.SendMessageAsync(embed: embed);
+            }
+            else
+            {
+                await e.Context.Channel.SendMessageAsync("Command doesnt exist");
             }
         }
 
@@ -276,7 +288,7 @@ namespace DiscordBot
 
                 else if (e.Message.Content.ToLower().StartsWith("https://boards.4chan.org/"))
                 {
-                    var urlArray = e.Message.Content.ToLower().TakeWhile(m => !m.Equals(' ')).ToArray();
+                    var urlArray = e.Message.Content.ToLower().TakeWhile(xc => !xc.Equals(' ')).ToArray();
                     var url = new string(urlArray);
 
                     var req = new AngleSharp.Network.Default.HttpRequester();
@@ -321,7 +333,7 @@ namespace DiscordBot
 
         private async Task AssignRoleToAMemberAsync(GuildMemberAddEventArgs e, string roleName)
         {
-            var role = e.Guild.Roles.Where(r => r.Name == roleName).FirstOrDefault();
+            var role = e.Guild.Roles.Where(xr => xr.Name == roleName).FirstOrDefault();
             var member = e.Member;
             await member.GrantRoleAsync(role);
         }
