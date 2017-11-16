@@ -35,7 +35,7 @@ namespace DiscordBot.Commands
         private string cooldownTimerLeft;
         private IConfiguration angleSharpConfiguration = AngleSharpConfigurationWithUserAgent();
         private ConfigJson cfg = ConfigJson.GetConfigJson();
-        private Permissions mutedRolePermissions = Permissions.AccessChannels | Permissions.AddReactions | Permissions.ChangeNickname | Permissions.CreateInstantInvite | Permissions.ReadMessageHistory;
+        private Permissions mutedRolePermissions = Permissions.AccessChannels | Permissions.ChangeNickname | Permissions.CreateInstantInvite | Permissions.ReadMessageHistory;
         private Permissions assignRolePermissions = Permissions.Administrator | Permissions.BanMembers | Permissions.DeafenMembers | Permissions.KickMembers | Permissions.ManageChannels | Permissions.ManageEmojis
             | Permissions.ManageGuild | Permissions.ManageMessages | Permissions.ManageNicknames | Permissions.ManageRoles | Permissions.ManageWebhooks | Permissions.MoveMembers | Permissions.MuteMembers | Permissions.ViewAuditLog;
 
@@ -264,7 +264,7 @@ namespace DiscordBot.Commands
             var message = await ctx.RespondWithFileAsync("../../Files/Pictures/CHALLENGE.jpg", url);
 
             var emojiMuscle = DiscordEmoji.FromName(ctx.Client, ":muscle:");
-            var emojiTurtle = ctx.Message.Content.StartsWith("!makoa") ? 
+            var emojiTurtle = ctx.Message.Content.StartsWith("!makoa") ?
                 DiscordEmoji.FromName(ctx.Client, ":makoa:") :
                 DiscordEmoji.FromName(ctx.Client, ":turtle:");
             var emojiAnchor = DiscordEmoji.FromName(ctx.Client, ":anchor:");
@@ -504,7 +504,7 @@ namespace DiscordBot.Commands
         {
             await ctx.TriggerTypingAsync();
 
-            if(!dice.Contains('d'))
+            if (!dice.Contains('d'))
             {
                 await ctx.RespondAsync("Wrong format. Correct format for roll should be `[rolls]d[sides]`");
                 return;
@@ -530,7 +530,7 @@ namespace DiscordBot.Commands
                 var roll = rnd.Next(sides) + 1;
 
                 await ctx.RespondAsync($"You rolled: { roll }");
-            } 
+            }
             else
             {
                 var totalRolls = Enumerable.Range(0, rolls)
@@ -777,7 +777,7 @@ namespace DiscordBot.Commands
                 while (param)
                 {
                     var reaction = await interactivity.WaitForReactionAsync(xe => emojiList.Contains(xe), ctx.User, TimeSpan.FromSeconds(10));
-                    
+
                     if (reaction != null)
                     {
                         switch (reaction.Emoji.GetDiscordName())
@@ -985,6 +985,80 @@ namespace DiscordBot.Commands
             }
 
             await ctx.Member.GrantRoleAsync(role);
+        }
+
+        [Command("prune")]
+        [Description("Prunes your last few messages")]
+        public async Task Prune(CommandContext ctx, [Description("Number of messages to prune, max amount of 50")] int numberOfMessages = 10)
+        {
+            await ctx.TriggerTypingAsync();
+
+            if (numberOfMessages >= 50)
+            {
+                await ctx.RespondAsync("Maximum number of messages to prune is 50.");
+                return;
+            }
+
+            if (IsActionOnCoolDown())
+            {
+                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
+                return;
+            }
+
+            var messages = await ctx.Channel.GetMessagesAsync(limit: 100);
+            var messagesToDelete = messages.Where(xm => xm.Author == ctx.User).ToList();
+
+            if (messagesToDelete.Count() >= numberOfMessages)
+            {
+                await PruneMessagesAsync(ctx, messagesToDelete, numberOfMessages);
+            }
+            else
+            {
+                do
+                {
+                    messages = await ctx.Channel.GetMessagesAsync(after: messages[99].Id);
+                    messagesToDelete.Concat(messages.Where(xm => xm.Author == ctx.User).ToList());
+                } while (messagesToDelete.Count >= numberOfMessages);
+
+                await PruneMessagesAsync(ctx, messagesToDelete, numberOfMessages);
+            }
+        }
+
+        [Command("prunebot")]
+        [Description("Prunes bot's last few messages")]
+        public async Task PruneBot(CommandContext ctx, [Description("Number of messages to prune, max amount of 50")] int numberOfMessages = 10)
+        {
+            await ctx.TriggerTypingAsync();
+
+            if (numberOfMessages >= 50)
+            {
+                await ctx.RespondAsync("Maximum number of messages to prune is 50.");
+                return;
+            }
+
+            if (IsActionOnCoolDown())
+            {
+                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
+                return;
+            }
+
+            var messages = await ctx.Channel.GetMessagesAsync(limit: 100);
+            var messagesToDelete = messages.Where(xm => xm.Author.Id == 258902871720984577).ToList();
+
+            if (messagesToDelete.Count() >= numberOfMessages)
+            {
+                await PruneMessagesAsync(ctx, messagesToDelete, numberOfMessages);
+            }
+            else
+            {
+                do
+                {
+                    messages = await ctx.Channel.GetMessagesAsync(after: messages[99].Id);
+                    messagesToDelete.Concat(messages.Where(xm => xm.Author.Id == 258902871720984577).ToList());
+                } while (messagesToDelete.Count >= numberOfMessages);
+
+                await PruneMessagesAsync(ctx, messagesToDelete, numberOfMessages);
+            }
         }
 
         [Command("mute")]
@@ -1247,6 +1321,15 @@ namespace DiscordBot.Commands
             var y = CMYKColor.Y;
 
             return $"C: { c }, M: { m }, Y: { y }";
+        }
+
+        private async Task PruneMessagesAsync(CommandContext ctx, List<DiscordMessage> messagesToDelete, int numberOfMessages)
+        {
+            for (int i = 0; i <= numberOfMessages; i++)
+            {
+                await ctx.Channel.DeleteMessageAsync(messagesToDelete[i]);
+                await Task.Delay(250);
+            }
         }
     }
 }

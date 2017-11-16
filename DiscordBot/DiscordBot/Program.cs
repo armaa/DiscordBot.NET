@@ -157,7 +157,7 @@ namespace DiscordBot
             foreach (var emoji in emojiList)
             {
                 await msg.CreateReactionAsync(emoji);
-                Task.Delay(250);
+                await Task.Delay(250);
             }
 
             var reaction = await interactivity.WaitForReactionAsync(xe => emojiList.Contains(xe), e.Member, TimeSpan.FromSeconds(60));
