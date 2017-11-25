@@ -24,6 +24,7 @@ using PUBGSharp.Helpers;
 using PUBGSharp.Net.Model;
 using System.Net.Http;
 using PUBGSharp.Data;
+using OpenCvSharp;
 
 namespace DiscordBot.Commands
 {
@@ -1026,6 +1027,7 @@ namespace DiscordBot.Commands
 
         [Command("prunebot")]
         [Description("Prunes bot's last few messages")]
+        [RequirePermissions(Permissions.ManageMessages)]
         public async Task PruneBot(CommandContext ctx, [Description("Number of messages to prune, max amount of 50")] int numberOfMessages = 10)
         {
             await ctx.TriggerTypingAsync();
@@ -1061,6 +1063,106 @@ namespace DiscordBot.Commands
             }
         }
 
+        [Command("hat")]
+        [Description("Puts a christmas hat on your picture!")]
+        [Aliases("christmas", "santa")]
+        public async Task Christmas(CommandContext ctx, [Description("Url to a picture you want the christmas hat on, if you dont want it being done for your avatar")] string url = "")
+        {
+            await ctx.TriggerTypingAsync();
+
+            if (IsActionOnCoolDown())
+            {
+                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
+                return;
+            }
+
+            var client = new HttpClient();
+
+            if (url == "")
+            {
+                var stream = await client.GetStreamAsync(ctx.Member.GetAvatarUrl(ImageFormat.Png));
+                var img = new MagickImage(stream);
+                img.Write("../../Files/Pictures/delete.png");
+            }
+            else
+            {
+                var stream = await client.GetStreamAsync(url);
+                var img = new MagickImage(stream);
+                img.Write("../../Files/Pictures/delete.png");
+            }
+
+            Mat result;
+
+            using (var src = new Mat("../../Files/Pictures/delete.png", ImreadModes.Color))
+            using (var gray = new Mat())
+            {
+                result = src.Clone();
+                Cv2.CvtColor(src, gray, ColorConversionCodes.BGR2GRAY);
+
+                var img = new MagickImage("../../Files/Pictures/delete.png");
+                var faceCC = new CascadeClassifier("../../Files/Xmls/haarcascade_frontalface_alt.xml");
+                var portraitCC = new CascadeClassifier("../../Files/Xmls/haarcascade_profileface.xml");
+                var faces = faceCC.DetectMultiScale(gray, 1.08, 2, HaarDetectionType.ScaleImage, new Size(30, 30));
+                var portraits = portraitCC.DetectMultiScale(gray, 1.08, 2, HaarDetectionType.ScaleImage, new Size(30, 30));
+
+                if (faces.Length == 0)
+                {
+                    await ctx.RespondAsync("No faces found.. Try another pic");
+                    return;
+                }
+
+                foreach (Rect face in faces)
+                {
+                    var portraitForFace = portraits.Where(xp => face.Contains(new Point((int)(xp.X + xp.Width * 0.5), (int)(xp.Y + xp.Height * 0.5)))).ToArray();
+
+                    if (portraitForFace.Length < 1)
+                        continue;
+
+                    var centerFace = new Point
+                    {
+                        X = (int)(face.X + face.Width * 0.5),
+                        Y = (int)(face.Y + face.Height * 0.5)
+                    };
+
+                    var centerPortrait = new Point
+                    {
+                        X = (int)(portraitForFace[0].X + portraitForFace[0].Width * 0.5),
+                        Y = (int)(portraitForFace[0].Y + portraitForFace[0].Height * 0.5)
+                    };
+
+                    if (face.Contains(centerPortrait))
+                    {
+                        var hat = new MagickImage("../../Files/Pictures/hat.png");
+                        if (centerFace.X > centerPortrait.X)
+                        {
+                            var hatWidth = Math.Round(face.Width * 1.8259887005649717514124293785311);
+                            var hatHeight = Math.Round(hatWidth * 0.6152380952380952380952380952381);
+                            hat.Resize(new MagickGeometry($"{ hatWidth }x{ hatHeight }!"));
+                            new Drawables().Composite(face.X - 60, face.Y - 230, CompositeOperator.Blend, hat).Draw(img);
+                        }
+                        else if (centerFace.X < centerPortrait.X)
+                        {
+                            var hatWidth = Math.Round(face.Width * 1.8259887005649717514124293785311);
+                            var hatHeight = Math.Round(hatWidth * 0.6152380952380952380952380952381);
+                            hat.Resize(new MagickGeometry($"{ hatWidth }x{ hatHeight }!"));
+                            hat.Flop();
+                            new Drawables().Composite(face.X - 60, face.Y - 230, CompositeOperator.Blend, hat).Draw(img);
+                        }
+                        else
+                        {
+                            await ctx.RespondAsync("Oops?");
+                            return;
+                        }
+                    }
+                }
+
+                img.Write("../../Files/Pictures/santa.png");
+                System.IO.File.Delete("../../Files/Pictures/delete.png");
+            }
+
+            await ctx.RespondWithFileAsync("../../Files/Pictures/santa.png");
+        }
+
         [Command("mute")]
         [Description("Mutes an user")]
         [RequireOwner]
@@ -1079,7 +1181,7 @@ namespace DiscordBot.Commands
                 await ctx.RespondAsync("You cant do that!");
                 return;
             }
-            
+
             var mutedRole = ctx.Guild.Roles.FirstOrDefault(xr => xr.Name == "Muted");
 
             if (user.Roles.Contains(mutedRole))
@@ -1087,7 +1189,7 @@ namespace DiscordBot.Commands
                 await ctx.RespondAsync("User is already muted!");
                 return;
             }
-            
+
             await user.GrantRoleAsync(mutedRole);
             await ctx.RespondAsync($"Muting { user.Mention } for { duration.Humanize(3, minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour) }");
 
@@ -1141,9 +1243,9 @@ namespace DiscordBot.Commands
         [Command("test")]
         [RequireOwner]
         [Hidden]
-        public async Task Test(CommandContext ctx)
+        public async Task Test(CommandContext ctx, string url = "")
         {
-
+            
         }
 
         [Command("game")]
