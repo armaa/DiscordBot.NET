@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -14,7 +13,6 @@ using Humanizer;
 using DSharpPlus.Net.WebSocket;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Entities;
-using ImageMagick;
 using DiscordBot.Classes;
 using DSharpPlus.Interactivity;
 
@@ -134,7 +132,7 @@ namespace DiscordBot
                 .AddField("Account Cretion Date", $"{ e.Member.CreationTimestamp.ToString("dd/MM/yyyy HH:mm:ss") } ({ e.Member.CreationTimestamp.Humanize() })");
 
             await channel.SendMessageAsync(embed: embed);
-            
+
             if (e.Guild.Id == 227847810152792064)
             {
                 _ = Task.Run(async () => await AssignRoleToAMember(e, channel));
@@ -235,8 +233,14 @@ namespace DiscordBot
         {
             e.Context.Client.DebugLogger.LogMessage(LogLevel.Error, "Bot", $"{ e.Context.User.Username } tried executing '{ e.Command?.QualifiedName ?? "<unknown command>" }' but it errored: { e.Exception.GetType() }: { e.Exception.Message ?? "<no message>" }", DateTime.Now);
 
-            if (e.Exception is ChecksFailedException)
+            if (e.Exception is ChecksFailedException ex)
             {
+                if (ex.FailedChecks.FirstOrDefault(xe => xe is DSharpPlus.CommandsNext.Attributes.CooldownAttribute) != null)
+                {
+                    await e.Context.RespondAsync("Command on cooldown, please wait a little bit before calling it again");
+                    return;
+                }
+
                 var emoji = DiscordEmoji.FromName(e.Context.Client, ":no_entry:");
 
                 var embed = new DiscordEmbedBuilder().WithTitle("Access denied")
@@ -253,7 +257,7 @@ namespace DiscordBot
                     .WithColor(DiscordColor.Red)
                     .WithTimestamp(DateTime.Now)
                     .WithFooter($"{ client.CurrentUser.Username }#{ client.CurrentUser.Discriminator }", client.CurrentUser.AvatarUrl);
-                
+
                 await e.Context.Channel.SendMessageAsync(embed: embed);
             }
             else

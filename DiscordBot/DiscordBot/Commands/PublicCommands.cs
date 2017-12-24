@@ -14,7 +14,6 @@ using Humanizer.Localisation;
 using Newtonsoft.Json.Linq;
 using Google.Apis.YouTube.v3;
 using Google.Apis.Services;
-using System.Threading;
 using AngleSharp;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
@@ -32,8 +31,6 @@ namespace DiscordBot.Commands
     {
         private static Random rnd = new Random();
         private DateTime startTime = DateTime.Now;
-        private DateTime cooldown = DateTime.Now;
-        private string cooldownTimerLeft;
         private IConfiguration angleSharpConfiguration = AngleSharpConfigurationWithUserAgent();
         private ConfigJson cfg = ConfigJson.GetConfigJson();
         private Permissions mutedRolePermissions = Permissions.AccessChannels | Permissions.ChangeNickname | Permissions.CreateInstantInvite | Permissions.ReadMessageHistory;
@@ -67,15 +64,10 @@ namespace DiscordBot.Commands
         [Command("guru")]
         [Description("Gets the paladins.guru profile of selected user name")]
         [Aliases("paladinsguru")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Guru(CommandContext ctx, [Description("User name which you wanna check")] string userName, [Description("Platform on which you wish to search the name on, PS for ps4 and XB for xbox")] GuruPlatform platform = GuruPlatform.PC)
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             if (userName.Equals(""))
             {
@@ -205,15 +197,10 @@ namespace DiscordBot.Commands
 
         [Command("urban")]
         [Description("Gets a random definition and an example for a term")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Urban(CommandContext ctx, [RemainingText][Description("Term you wanna look up")] string term)
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             if (term.Equals(""))
             {
@@ -281,12 +268,6 @@ namespace DiscordBot.Commands
         {
             await ctx.TriggerTypingAsync();
 
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
-
             var url = "https://myanimelist.net/topanime.php";
             var doc = await BrowsingContext.New(angleSharpConfiguration).OpenAsync(url);
             var selectorTitles = "div.di-ib.clearfix a:nth-child(1)";
@@ -314,15 +295,10 @@ namespace DiscordBot.Commands
         [Command("google")]
         [Description("Makes a google search for you")]
         [Aliases("lmgtfy")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Google(CommandContext ctx, [RemainingText][Description("Term you want to check up")] string term)
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             if (term.Equals(""))
             {
@@ -336,15 +312,10 @@ namespace DiscordBot.Commands
 
         [Command("weather")]
         [Description("Gives the current weather statistics for location provided")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Weather(CommandContext ctx, [RemainingText][Description("Location you want to get the statistics for")] string location)
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             if (location.Equals(""))
             {
@@ -440,15 +411,10 @@ namespace DiscordBot.Commands
         [Command("youtube")]
         [Description("Links a top video for the term you search for")]
         [Aliases("yt")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Youtube(CommandContext ctx, [RemainingText][Description("The term you want to look up")] string term)
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             if (term.Equals(""))
             {
@@ -542,15 +508,10 @@ namespace DiscordBot.Commands
 
         [Command("booru")]
         [Description("Takes a random picture off of danbooru")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Booru(CommandContext ctx, [RemainingText][Description("Tags you want to search, please stick to the booru convention of tag searching")] string tags)
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             var rating = ctx.Channel.IsNSFW ? "rating:explicit" : "rating:safe";
 
@@ -579,15 +540,10 @@ namespace DiscordBot.Commands
 
         [Command("pubg")]
         [Description("Gives the stats for a specific player")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Pubg(CommandContext ctx, [Description("Name of the player")] string name, [Description("Mode you want to look the stats up for")] string mode = "SoloFpp", [Description("Region you want to look the stats up for")] string region = "AGG")
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             if (!Enum.TryParse(mode, true, out Mode pickedMode))
             {
@@ -691,15 +647,10 @@ namespace DiscordBot.Commands
         [Command("respect")]
         [Description("Pay respect to someone")]
         [Aliases("f", "payrespect")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Respect(CommandContext ctx, [Description("Url to the image")] string url = "")
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             if (ctx.Message.Attachments.Count > 0)
             {
@@ -723,6 +674,13 @@ namespace DiscordBot.Commands
             var img = new MagickImage(imageStream);
             using (MagickImage i = new MagickImage("../../Files/Pictures/f-original.jpg"))
             {
+                var images = new MagickImageCollection
+                {
+                    (new MagickImage(MagickColors.Black, img.Width, img.Height)),
+                    img
+                };
+
+                img = images.Flatten() as MagickImage;
                 img.Resize(new MagickGeometry("134x197!"));
                 img.VirtualPixelMethod = VirtualPixelMethod.Transparent;
                 img.Distort(DistortMethod.Perspective, new double[] { 0, 0, 0, 0, 0, 197, 19, 197, 134, 0, 118, 0, 134, 197, 132, 186 });
@@ -739,15 +697,10 @@ namespace DiscordBot.Commands
 
         [Command("image")]
         [Description("Searches google for images")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Image(CommandContext ctx, [RemainingText][Description("Term you want to search for")] string term)
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             var interactivity = ctx.Client.GetInteractivityModule();
             term = term.Replace(' ', '+');
@@ -828,15 +781,10 @@ namespace DiscordBot.Commands
         [Command("userinfo")]
         [Description("Gives info about a user in the guild")]
         [Aliases("uinfo")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task UserInfo(CommandContext ctx, [RemainingText][Description("The user name, mentioned or just written down normally")] string name)
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             var user = await GetDiscordMemberFromStringAsync(ctx, name);
 
@@ -865,15 +813,10 @@ namespace DiscordBot.Commands
         [Command("serverinfo")]
         [Description("Gives info about the guild")]
         [Aliases("guildinfo", "sinfo", "ginfo")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task ServerInfo(CommandContext ctx)
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.HotPink)
                 .WithAuthor(ctx.Guild.Name, ctx.Guild.IconUrl, ctx.Guild.IconUrl)
@@ -895,27 +838,31 @@ namespace DiscordBot.Commands
             await ctx.RespondAsync(embed: embed);
         }
 
-        //[Command("reminder")]
-        //[Description("Sets a reminder for you")]
-        //[Aliases("remind", "remindme")]
-        //public async Task Reminder(CommandContext ctx, [Description("Time, from now, at which you should get the reminder")] TimeSpan time, [RemainingText][Description("Message of the reminder")] string message = "Reminder for something important you asked to be reminded of.")
-        //{
-        //    var date = DateTime.Now.Add(time);
-        //    var user = ctx.Member;
-        //    await ctx.RespondAsync($"Reminder set for { date.Humanize(false, DateTime.Now) } with the message saying: ```{ message }```");
-        //    var t = new Timer(async e => await user.SendMessageAsync(message), null, time, TimeSpan.FromMilliseconds(-1));
-        //}
-
-        [Command("color")]
-        public async Task Color(CommandContext ctx, byte r, byte g, byte b)
+        [Command("reminder")]
+        [Description("Sets a reminder for you")]
+        [Aliases("remind", "remindme")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
+        public async Task Reminder(CommandContext ctx, [Description("Time, from now, at which you should get the reminder")] TimeSpan time, [RemainingText][Description("Message of the reminder")] string message = "Reminder for something important you asked to be reminded of.")
         {
             await ctx.TriggerTypingAsync();
 
-            if (IsActionOnCoolDown())
+            var date = DateTime.Now.Add(time);
+            var user = ctx.Member;
+            await ctx.RespondAsync($"Reminder set for { date.Humanize(false, DateTime.Now) } with the message saying: ```{ message }```");
+            _ = Task.Run(async () =>
             {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
+                await Task.Yield();
+                await Task.Delay(time);
+                await user.SendMessageAsync(message);
+            });
+        }
+
+        [Command("color")]
+        [Description("Shows information about the RGB color you request, along with the display of the color on the side of the embed")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
+        public async Task Color(CommandContext ctx, [Description("Value of color red")] byte r, [Description("Value of color green")] byte g, [Description("Value of color blue")] byte b)
+        {
+            await ctx.TriggerTypingAsync();
 
             var hex = GetHexValueFromRgb(r, g, b);
             var HSL = GetHSLValueFromRgb(r, g, b);
@@ -937,6 +884,7 @@ namespace DiscordBot.Commands
         [Command("showroles")]
         [Description("Shows the roles that are present on the server, for easier usage of `assignrole` command")]
         [Aliases("roles")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task ShowRoles(CommandContext ctx)
         {
             var roles = ctx.Guild.Roles;
@@ -955,14 +903,9 @@ namespace DiscordBot.Commands
         [Command("assignrole")]
         [Description("Grants a role to a user who calls the command, with a supplied name of the role")]
         [Aliases("giverole", "grantrole")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task AssignRole(CommandContext ctx, [Description("The name of the role")] string name)
         {
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
-
             var role = ctx.Guild.Roles.FirstOrDefault(xr => xr.Name.ToLower() == name.ToLower());
 
             if (role == null)
@@ -990,19 +933,12 @@ namespace DiscordBot.Commands
 
         [Command("prune")]
         [Description("Prunes your last few messages")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Prune(CommandContext ctx, [Description("Number of messages to prune, max amount of 50")] int numberOfMessages = 10)
         {
-            await ctx.TriggerTypingAsync();
-
             if (numberOfMessages >= 50)
             {
                 await ctx.RespondAsync("Maximum number of messages to prune is 50.");
-                return;
-            }
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
                 return;
             }
 
@@ -1028,6 +964,7 @@ namespace DiscordBot.Commands
         [Command("prunebot")]
         [Description("Prunes bot's last few messages")]
         [RequirePermissions(Permissions.ManageMessages)]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task PruneBot(CommandContext ctx, [Description("Number of messages to prune, max amount of 50")] int numberOfMessages = 10)
         {
             await ctx.TriggerTypingAsync();
@@ -1035,12 +972,6 @@ namespace DiscordBot.Commands
             if (numberOfMessages >= 50)
             {
                 await ctx.RespondAsync("Maximum number of messages to prune is 50.");
-                return;
-            }
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
                 return;
             }
 
@@ -1066,15 +997,10 @@ namespace DiscordBot.Commands
         [Command("hat")]
         [Description("Puts a christmas hat on your picture!")]
         [Aliases("christmas", "santa")]
+        [Cooldown(1, 10, CooldownBucketType.User)]
         public async Task Christmas(CommandContext ctx, [Description("Url to a picture you want the christmas hat on, if you dont want it being done for your avatar")] string url = "")
         {
             await ctx.TriggerTypingAsync();
-
-            if (IsActionOnCoolDown())
-            {
-                await ctx.RespondAsync($"Action on cooldown, try again in { cooldownTimerLeft }");
-                return;
-            }
 
             var client = new HttpClient();
 
@@ -1193,7 +1119,12 @@ namespace DiscordBot.Commands
             await user.GrantRoleAsync(mutedRole);
             await ctx.RespondAsync($"Muting { user.Mention } for { duration.Humanize(3, minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour) }");
 
-            var t = new Timer(async e => await user.RevokeRoleAsync(mutedRole), null, duration, TimeSpan.FromMilliseconds(-1));
+            _ = Task.Run(async () =>
+            {
+                await Task.Yield();
+                await Task.Delay(duration);
+                await user.RevokeRoleAsync(mutedRole);
+            });
         }
 
         [Command("setmute")]
@@ -1243,9 +1174,9 @@ namespace DiscordBot.Commands
         [Command("test")]
         [RequireOwner]
         [Hidden]
-        public async Task Test(CommandContext ctx, string url = "")
+        public async Task Test(CommandContext ctx)
         {
-            
+
         }
 
         [Command("game")]
@@ -1280,21 +1211,6 @@ namespace DiscordBot.Commands
         private void AppendMemberToString(DiscordMember m, StringBuilder sb)
         {
             sb.Append($"Name: { m.Username }#{ m.Discriminator }, Nickname: { m.Nickname ?? "NO NICKNAME" }, Date joined: { m.JoinedAt.Date.Humanize() } ({ m.JoinedAt.Date.ToString("dd/MM/yyyy") })\n");
-        }
-
-        private bool IsActionOnCoolDown()
-        {
-            var secondsPassed = DateTime.Now.Subtract(cooldown).Seconds;
-
-            if (secondsPassed < 10)
-            {
-                cooldownTimerLeft = (10 - secondsPassed).Seconds().Humanize(minUnit: TimeUnit.Second);
-                return true;
-            }
-
-            cooldown = DateTime.Now;
-
-            return false;
         }
 
         private List<int> GetRandomDistinctNumbers(int minNumber, int maxNumber, int numberOfNumbers)
