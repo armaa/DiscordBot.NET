@@ -128,8 +128,8 @@ namespace DiscordBot
 
             var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.Green)
                 .WithAuthor(e.Member.Username, e.Member.AvatarUrl, e.Member.AvatarUrl)
-                .AddField("New Member Joined", "Welcome to our new member")
-                .AddField("Account Cretion Date", $"{ e.Member.CreationTimestamp.ToString("dd/MM/yyyy HH:mm:ss") } ({ e.Member.CreationTimestamp.Humanize() })");
+                .AddField("New Member Joined", $"Welcome to our new member { e.Member.Mention }")
+                .AddField("Account Creation Date", $"{ e.Member.CreationTimestamp.ToString("dd/MM/yyyy HH:mm:ss") } ({ e.Member.CreationTimestamp.Humanize() })");
 
             await channel.SendMessageAsync(embed: embed);
 

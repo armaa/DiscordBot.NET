@@ -922,7 +922,7 @@ namespace DiscordBot.Commands
 
             var IsAllowedToAssign = role.CheckPermission(assignRolePermissions);
 
-            if (IsAllowedToAssign.Humanize() == "Allowed")
+            if (IsAllowedToAssign.Humanize() == "Allowed" || role.Name == "Muted")
             {
                 await ctx.RespondAsync("You cant assign that role to yourself.");
                 return;
@@ -945,19 +945,21 @@ namespace DiscordBot.Commands
             var messages = await ctx.Channel.GetMessagesAsync(limit: 100);
             var messagesToDelete = messages.Where(xm => xm.Author == ctx.User).ToList();
 
-            if (messagesToDelete.Count() >= numberOfMessages)
+            while (messagesToDelete.Count < numberOfMessages)
             {
-                await PruneMessagesAsync(ctx, messagesToDelete, numberOfMessages);
-            }
-            else
-            {
-                do
-                {
-                    messages = await ctx.Channel.GetMessagesAsync(after: messages[99].Id);
-                    messagesToDelete.Concat(messages.Where(xm => xm.Author == ctx.User).ToList());
-                } while (messagesToDelete.Count >= numberOfMessages);
+                var lastMessage = messages.LastOrDefault();
+                if (lastMessage == null)
+                    break;
 
-                await PruneMessagesAsync(ctx, messagesToDelete, numberOfMessages);
+                messages = await ctx.Channel.GetMessagesAsync(limit: 100, before: lastMessage.Id);
+                messagesToDelete.AddRange(messages.Where(xm => xm.Author == ctx.User));
+            }
+
+            var deletionLists = SplitList(messagesToDelete.Take(numberOfMessages).ToList(), 100);
+
+            foreach (var list in deletionLists)
+            {
+                await ctx.Channel.DeleteMessagesAsync(list);
             }
         }
 
@@ -978,19 +980,21 @@ namespace DiscordBot.Commands
             var messages = await ctx.Channel.GetMessagesAsync(limit: 100);
             var messagesToDelete = messages.Where(xm => xm.Author.Id == 258902871720984577).ToList();
 
-            if (messagesToDelete.Count() >= numberOfMessages)
+            while (messagesToDelete.Count < numberOfMessages)
             {
-                await PruneMessagesAsync(ctx, messagesToDelete, numberOfMessages);
-            }
-            else
-            {
-                do
-                {
-                    messages = await ctx.Channel.GetMessagesAsync(after: messages[99].Id);
-                    messagesToDelete.Concat(messages.Where(xm => xm.Author.Id == 258902871720984577).ToList());
-                } while (messagesToDelete.Count >= numberOfMessages);
+                var lastMessage = messages.LastOrDefault();
+                if (lastMessage == null)
+                    break;
 
-                await PruneMessagesAsync(ctx, messagesToDelete, numberOfMessages);
+                messages = await ctx.Channel.GetMessagesAsync(limit: 100, before: lastMessage.Id);
+                messagesToDelete.AddRange(messages.Where(xm => xm.Author.Id == 258902871720984577));
+            }
+
+            var deletionLists = SplitList(messagesToDelete.Take(numberOfMessages).ToList(), 100);
+
+            foreach (var list in deletionLists)
+            {
+                await ctx.Channel.DeleteMessagesAsync(list);
             }
         }
 
@@ -1347,6 +1351,14 @@ namespace DiscordBot.Commands
             {
                 await ctx.Channel.DeleteMessageAsync(messagesToDelete[i]);
                 await Task.Delay(250);
+            }
+        }
+
+        public static IEnumerable<List<T>> SplitList<T>(List<T> locations, int size)
+        {
+            for (var i = 0; i < locations.Count; i += size)
+            {
+                yield return locations.GetRange(i, Math.Min(size, locations.Count - i));
             }
         }
     }
