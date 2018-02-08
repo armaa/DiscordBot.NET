@@ -904,7 +904,7 @@ namespace DiscordBot.Commands
         [Description("Grants a role to a user who calls the command, with a supplied name of the role")]
         [Aliases("giverole", "grantrole")]
         [Cooldown(1, 10, CooldownBucketType.User)]
-        public async Task AssignRole(CommandContext ctx, [Description("The name of the role")] string name)
+        public async Task AssignRole(CommandContext ctx, [RemainingText][Description("The name of the role")] string name)
         {
             var role = ctx.Guild.Roles.FirstOrDefault(xr => xr.Name.ToLower() == name.ToLower());
 
