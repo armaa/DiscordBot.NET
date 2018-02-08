@@ -80,7 +80,7 @@ namespace DiscordBot
         private async Task Client_GuildMemberUpdated(GuildMemberUpdateEventArgs e)
         {
             var bot = await e.Guild.GetMemberAsync(258902871720984577);
-            var channel = e.Guild.Channels.FirstOrDefault(xc => xc.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
+            var channel = GetChannelToPostNotificationIn(e, bot);
 
             if (e.NicknameAfter == null && e.NicknameBefore == null || e.NicknameBefore == e.NicknameAfter)
             {
@@ -124,7 +124,7 @@ namespace DiscordBot
             e.Client.DebugLogger.LogMessage(LogLevel.Info, "Bot", $"New member joined { e.Guild.Name } guild.", DateTime.Now);
 
             var bot = await e.Guild.GetMemberAsync(258902871720984577);
-            var channel = e.Guild.Channels.FirstOrDefault(xc => xc.PermissionsFor(bot).ToPermissionString().Contains("Send message"));
+            var channel = GetChannelToPostNotificationIn(e, bot);
 
             var embed = new DiscordEmbedBuilder().WithColor(DiscordColor.Green)
                 .WithAuthor(e.Member.Username, e.Member.AvatarUrl, e.Member.AvatarUrl)
@@ -340,6 +340,30 @@ namespace DiscordBot
             var role = e.Guild.Roles.Where(xr => xr.Name == roleName).FirstOrDefault();
             var member = e.Member;
             await member.GrantRoleAsync(role);
+        }
+
+        private DiscordChannel GetChannelToPostNotificationIn(GuildMemberUpdateEventArgs e, DiscordMember bot)
+        {
+            var channel = e.Guild.Channels.FirstOrDefault(xc => xc.Name.ToLower().Contains("bot") || xc.Name.ToLower().Contains("test"));
+
+            if (channel == null)
+            {
+                channel = e.Guild.Channels.FirstOrDefault(xc => xc.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
+            }
+
+            return channel;
+        }
+
+        private DiscordChannel GetChannelToPostNotificationIn(GuildMemberAddEventArgs e, DiscordMember bot)
+        {
+            var channel = e.Guild.Channels.FirstOrDefault(xc => xc.Name.ToLower().Contains("bot") || xc.Name.ToLower().Contains("test"));
+
+            if (channel == null)
+            {
+                channel = e.Guild.Channels.FirstOrDefault(xc => xc.PermissionsFor(bot).ToPermissionString().Contains("Send message") == true);
+            }
+
+            return channel;
         }
     }
 }
