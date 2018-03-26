@@ -36,6 +36,7 @@ namespace DiscordBot.Commands
         private Permissions mutedRolePermissions = Permissions.AccessChannels | Permissions.ChangeNickname | Permissions.CreateInstantInvite | Permissions.ReadMessageHistory;
         private Permissions assignRolePermissions = Permissions.Administrator | Permissions.BanMembers | Permissions.DeafenMembers | Permissions.KickMembers | Permissions.ManageChannels | Permissions.ManageEmojis
             | Permissions.ManageGuild | Permissions.ManageMessages | Permissions.ManageNicknames | Permissions.ManageRoles | Permissions.ManageWebhooks | Permissions.MoveMembers | Permissions.MuteMembers | Permissions.ViewAuditLog;
+        private HttpClient client = new HttpClient();
 
         [Command("uptime")]
         [Description("Gives the time how long has the bot been running for")]
@@ -208,7 +209,7 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            using (HttpClient client = new HttpClient())
+            using (client)
             {
                 var value = await client.GetStringAsync($"http://api.urbandictionary.com/v0/define?term={ term }");
                 var json = JsonConvert.DeserializeObject<Urban>(value);
@@ -347,7 +348,6 @@ namespace DiscordBot.Commands
             var todayTempLow = selectedWeek.FirstOrDefault().QuerySelectorAll(selectorTempToday)[2].TextContent;
 
             //.GetStreamAsync()
-            var client = new HttpClient();
             var mainWeatherIconStream = await client.GetStreamAsync($"https:{ selectedMainWeatherIcon.GetAttribute("src") }");
             var mainWeatherIcon = new MagickImage(mainWeatherIconStream);
             var weatherList = new List<Weather>();
@@ -454,7 +454,6 @@ namespace DiscordBot.Commands
                 .ToList()
                 .ForEach(xm => AppendMemberToString(xm, sb));
 
-            var client = new HttpClient();
             var content = new StringContent(sb.ToString());
             var response = await client.PostAsync("https://hastebin.com/documents", content);
             var jsonToDeserialize = await response.Content.ReadAsStringAsync();
@@ -521,7 +520,7 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            using (HttpClient client = new HttpClient())
+            using (client)
             {
                 var jsonString = await client.GetStringAsync($"https://danbooru.donmai.us/posts.json?random=true&limit=20&tags={ rating } { tags }");
                 var json = JArray.Parse(jsonString);
@@ -557,8 +556,8 @@ namespace DiscordBot.Commands
                 return;
             }
 
-            var client = new PUBGStatsClient(cfg.ApiKeyPUBG);
-            var stats = await client.GetPlayerStatsAsync(name);
+            var pubgClient = new PUBGStatsClient(cfg.ApiKeyPUBG);
+            var stats = await pubgClient.GetPlayerStatsAsync(name);
             var foundStats = stats.Stats.Find(xs => xs.Mode == pickedMode && xs.Region == pickedRegion && xs.Season == Seasons.EASeason5).Stats;
 
             var avatarUrl = stats.Avatar;
@@ -576,9 +575,8 @@ namespace DiscordBot.Commands
             {
                 kda, wins, winPercentage, roundsPlayed, top10Rate, top10Ratio, rating
             };
-
-            var httpclient = new HttpClient();
-            var avatarIcon = await httpclient.GetStreamAsync(avatarUrl);
+;
+            var avatarIcon = await client.GetStreamAsync(avatarUrl);
             var avatar = new MagickImage(avatarIcon);
             using (MagickImage i = new MagickImage("../../Files/Pictures/stats-original.png"))
             {
@@ -668,9 +666,8 @@ namespace DiscordBot.Commands
                 await ctx.RespondAsync("Please attach an image or post a link to the image.");
                 return;
             }
-
-            var httpclient = new HttpClient();
-            var imageStream = await httpclient.GetStreamAsync(url);
+            
+            var imageStream = await client.GetStreamAsync(url);
             var img = new MagickImage(imageStream);
             using (MagickImage i = new MagickImage("../../Files/Pictures/f-original.jpg"))
             {
@@ -705,7 +702,7 @@ namespace DiscordBot.Commands
             var interactivity = ctx.Client.GetInteractivityModule();
             term = term.Replace(' ', '+');
 
-            using (HttpClient client = new HttpClient())
+            using (client)
             {
                 var value = await client.GetStringAsync($"https://www.googleapis.com/customsearch/v1?key={ cfg.ApiKeyGoogleSearch }&cx={ cfg.CxGoogleSearch }&q={ term }&num=10&searchType=image");
                 var token = JToken.Parse(value);
@@ -1006,8 +1003,6 @@ namespace DiscordBot.Commands
         {
             await ctx.TriggerTypingAsync();
 
-            var client = new HttpClient();
-
             if (url == "")
             {
                 var stream = await client.GetStreamAsync(ctx.Member.GetAvatarUrl(ImageFormat.Png));
@@ -1206,7 +1201,6 @@ namespace DiscordBot.Commands
         [Hidden]
         public async Task Avatar(CommandContext ctx, string avatarLink)
         {
-            var client = new HttpClient();
             var stream = await client.GetStreamAsync(avatarLink);
 
             await ctx.Client.EditCurrentUserAsync(null, stream);
